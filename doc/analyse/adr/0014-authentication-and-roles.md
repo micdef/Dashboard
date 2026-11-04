@@ -15,7 +15,7 @@ The web site shows sensitive data about the infrastructure and can issue remote 
 ## Decision
 
 - V1 uses **local accounts**, several of them, with **roles**.
-- Authentication relies on **ASP.NET Core Identity** with **custom stores**: at least `IUserStore`, `IUserRoleStore` and `IUserPasswordStore`. The stores in the web site call a Backend gRPC service, which relays them to the account procedures through the data gateway (ADR-0004). The web site never reaches the data gateway itself.
+- Authentication relies on **ASP.NET Core Identity** with **custom stores**: at least `IUserStore`, `IUserRoleStore` and `IUserPasswordStore`. The stores in the web site call a gRPC service of the API process (ADR-0005), which relays them to the account procedures through the data gateway (ADR-0004). The web site never reaches the data gateway itself.
 - Proposed roles: **Reader**, **Operator**, **Admin**.
 
 ## Alternatives considered

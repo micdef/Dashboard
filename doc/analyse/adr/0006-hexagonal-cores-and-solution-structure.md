@@ -15,7 +15,7 @@ The product owner first considered clean architecture (ports and adapters) appli
 
 - **No CQRS.**
 - A real **hexagonal core** (ports and adapters) exists only where there is real domain logic:
-  - `Fleet.Core` (Backend): host state derived from heartbeats (time through `TimeProvider`), command lifecycle, deterministic rules, permissions per role.
+  - `Fleet.Core` (shared by the two Backend processes, ADR-0005): host state derived from heartbeats (time through `TimeProvider`), command lifecycle, deterministic rules, permissions per role.
   - `Agent.Core` (agent): XML log parsing engine (a pure function), local buffer with resume, command allowlist; Linux and Windows adapters around it.
 - The data gateway and the web site have **no hexagon**: the data gateway is a pure adapter (ADR-0003) and the web site is a user interface over the Backend.
 - A .NET project exists only if it has **different dependencies or a different deployment**; layers inside a project are folders.
@@ -28,7 +28,8 @@ Proposed solution structure:
 | `src/contracts/protos` | `.proto` files (ADR-0004) |
 | `Dashboard.Contracts.Edge`, `Dashboard.Contracts.Internal` | generated C# contracts |
 | `Dashboard.Agent.Core`, `Dashboard.Agent` | agent core and host |
-| `Dashboard.Fleet.Core`, `Dashboard.Backend` | domain core and Backend host |
+| `Dashboard.Fleet.Core` | domain core shared by the Backend processes |
+| `Dashboard.Collector`, `Dashboard.Api` | the two Backend hosts (ADR-0005) |
 | `Dashboard.DataGateway` | data gateway |
 | `Dashboard.Web` | Blazor web site |
 | `Dashboard.Database` | SQL project (`.sqlproj`, DACPAC) |

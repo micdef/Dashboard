@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Status | Accepted |
-| Date | 2026-11-03 (proposed), 2026-11-04 (accepted) |
+| Date | 2026-11-03 (proposed), 2026-11-04 (accepted), 2026-11-04 (amended after ADR-0005) |
 | Decider | Michaël Defraene (product owner, architect) |
 | Drafted by | Claude (main developer); the decisions had a second reading by the architecture review agent during scoping |
 
@@ -20,7 +20,8 @@ The system is made of the following processes:
 | Process | Host | Role |
 |---|---|---|
 | agent (.NET Worker Service, one binary) | every supervised machine | heartbeat, inventory, logs (journald, Nginx files, Windows Event Log), XML log parser module enabled by configuration, catalogue commands |
-| Backend (collector and API) | Linux "app" VM | domain core: fleet, host state, rules, command lifecycle, ONNX model inference |
+| Backend: Collector | Linux "app" VM | serves the agents: ingestion, host state, real-time rules, command delivery (ADR-0005) |
+| Backend: API | Linux "app" VM | serves the web site: user-facing services, authorisation, command creation (ADR-0005) |
 | data gateway (called the "very-back-end" in the first outline) | Linux "app" VM | the only process that connects to SQL Server |
 | web site (Blazor Web App, Interactive Server render mode) | Linux "app" VM, published through the existing Nginx | user interface, accounts and roles |
 | AI node | GMKtec NucBox G10, Linux | Python training, local LLM; no database access |
@@ -29,10 +30,10 @@ The system is made of the following processes:
 
 Deployment rules:
 
-- The Backend, the data gateway and the web site run on the same Linux VM as **separate systemd services**, each under its **own dedicated system user**.
+- The two Backend processes, the data gateway and the web site run on the same Linux VM as **separate systemd services**, each under its **own dedicated system user**.
 - The data gateway reaches the SQL Server VM through a **dedicated network interface**.
 - The existing Nginx stays separate and publishes **only the web site**.
-- Agents connect **directly** to the Backend. Certificate authentication only works behind a proxy if the proxy itself authenticates the client certificate and forwards the result (see ADR-0007).
+- Agents connect **directly** to the Collector. Certificate authentication only works behind a proxy if the proxy itself authenticates the client certificate and forwards the result (see ADR-0007).
 - Firewall rules are designed and applied by the product owner.
 
 ## Alternatives considered
@@ -51,7 +52,7 @@ Deployment rules:
 
 ### Negative
 
-- Three services on one VM share its resources; a runaway process can starve the others. Resource limits per systemd unit should be considered at deployment.
+- Four services on one VM share its resources; a runaway process can starve the others. Resource limits per systemd unit should be considered at deployment.
 - More units to deploy and monitor than a single process.
 
 ## References

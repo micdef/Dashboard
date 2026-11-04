@@ -29,7 +29,7 @@ Open points marked "raised in review" were added after the team review of 2026-1
 | [0002](0002-sql-server-developer-edition.md) | SQL Server 2025 Standard Developer edition | Accepted | 2026-11-04 |
 | [0003](0003-data-access-through-a-single-gateway.md) | Data access through a single gateway, ADO.NET only | Accepted | 2026-11-04 |
 | [0004](0004-grpc-everywhere-and-transports.md) | gRPC everywhere, mTLS for agents, Unix sockets inside the host | Accepted | 2026-11-04 |
-| [0005](0005-single-backend-process.md) | One Backend process for the collector and the API | Proposed | 2026-11-03 |
+| [0005](0005-backend-split-into-collector-and-api.md) | Backend split into a Collector and an API process | Accepted | 2026-11-04 |
 | [0006](0006-hexagonal-cores-and-solution-structure.md) | Hexagonal cores where there is domain logic, no CQRS | Proposed | 2026-11-03 |
 | [0007](0007-machine-identity-and-enrolment.md) | Machine identity by client certificate, agent enrolment | Proposed | 2026-11-03 |
 | [0008](0008-log-format-otlp-data-model.md) | Log format: the OTLP logs data model | Proposed | 2026-11-03 |

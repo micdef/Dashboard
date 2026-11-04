@@ -48,7 +48,7 @@ The Python code follows the project's Python rules: reproducible runs (fixed and
 
 ## Open points
 
-1. **Who calls the LLM.** Since Python only trains, the proposal is that the **Backend (.NET)** calls the LLM through the HTTP API of its server (Ollama or llama.cpp) on the AI node.
+1. **Who calls the LLM.** Since Python only trains, the proposal is that the **Backend (.NET)** calls the LLM through the HTTP API of its server (Ollama or llama.cpp) on the AI node. Since the Backend runs as two processes (ADR-0005), this ADR must also say which process runs ONNX scoring and which one calls the LLM.
 2. **.NET implementation of log templates.** Drain (as in the Python library Drain3) was the planned algorithm. Proposal: an in-house C# implementation of Drain, tested against Drain3 outputs on a fixed corpus (Drain3 is then only a test oracle, never part of the pipeline). Whether a maintained .NET implementation already exists is **not verified**.
 3. Raised in review, proposed: the Backend checks the model's hash, input schema and version when loading it; if loading fails, rules keep running, an alert is raised and anomaly scoring is shown as unavailable; sources absent from the training data are flagged "not covered by the model"; the template state is versioned with the model.
 4. Raised in review, proposed: the LLM call has an explicit timeout sized on the measured latency; each report records the model, the hardware used (GPU or CPU), its generation status and the facts it was generated from; a failed generation is shown as failed, never replaced by an older report.

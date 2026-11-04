@@ -15,7 +15,7 @@ The dashboard must show which log belongs to which machine, and remote commands 
 ## Decision
 
 - **The origin machine is derived from the authenticated mTLS client certificate**: the certificate hash maps to a `HostId`. A field of the message is **never** used to identify the machine; resource attributes sent by the agent are informative only.
-- The Backend agent endpoint uses Kestrel with `ClientCertificateMode.RequireCertificate` and the `Microsoft.AspNetCore.Authentication.Certificate` handler. The handler trusts **only the private certificate authority** (`ChainTrustValidationMode = X509ChainTrustMode.CustomRootTrust`, with the CA chain in `CustomTrustStore`; by default it would trust the system store). It checks the validity period, the revocation status and the certificate use.
+- The Collector's agent endpoint (ADR-0005) uses Kestrel with `ClientCertificateMode.RequireCertificate` and the `Microsoft.AspNetCore.Authentication.Certificate` handler. The handler trusts **only the private certificate authority** (`ChainTrustValidationMode = X509ChainTrustMode.CustomRootTrust`, with the CA chain in `CustomTrustStore`; by default it would trust the system store). It checks the validity period, the revocation status and the certificate use.
 - The **agent validates the Backend's server certificate** against the private CA only, never against the system store alone.
 - gRPC hardening: a bounded `MaxReceiveMessageSize`; `EnableDetailedErrors` is never enabled in production.
 - **Enrolment, V1**: a small **private certificate authority** and an enrolment script run by the product owner issue one certificate per machine. The CA private key **does not live on the "app" VM**.
