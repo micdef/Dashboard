@@ -50,7 +50,8 @@ Logs must be searchable quickly for recent events, kept longer for analysis and 
 6. Raised in review, proposed: the export selects rows by **ingestion time** (a persisted watermark), not by event time, so logs delivered late by an agent are exported in the next file; files are written under a temporary name and renamed after their checksum is computed.
 7. Raised in review, proposed: any file readable by the training code is pseudonymised, and the training code never reads the raw archive; access control and encryption at rest of the NAS archive are defined; the purpose and legal basis of the processing (security monitoring) are documented.
 8. NAS file protocol and access rights (moved from ADR-0004 on 2026-11-04).
-9. Raised in review, proposed: the partition job keeps at least a few empty future partitions, and its last successful run is shown as a health indicator; the 12-month NAS purge is a monitored job too.
+9. Metrics storage and retention (added on 2026-11-04 after ADR-0008): table design, retention period, and whether older data points are aggregated (for example per hour) instead of being kept at full resolution.
+10. Raised in review, proposed: the partition job keeps at least a few empty future partitions, and its last successful run is shown as a health indicator; the 12-month NAS purge is a monitored job too.
 
 ## References
 

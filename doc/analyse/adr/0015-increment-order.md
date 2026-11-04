@@ -16,9 +16,9 @@ V1 must be a complete, working system with integrated AI, presented to the train
 | Increment | Content |
 |---|---|
 | 0.1 | Heartbeat end to end: database, data gateway, Backend, Linux agent, status page |
-| 0.2 | Linux logs and the machine page |
+| 0.2 | Linux logs, Linux metrics (processor, memory, disks; ADR-0008) and the machine page |
 | 0.3 | AI: .NET preparation, Python training, ONNX inference, LLM report |
-| 0.4 | Windows agent and XML log parser |
+| 0.4 | Windows agent (logs and metrics) and XML log parser |
 | 0.5 | Rules and CVE |
 | 0.6 | Remote commands |
 
@@ -44,6 +44,7 @@ V1 must be a complete, working system with integrated AI, presented to the train
 ## Open points
 
 1. The order 0.1, 0.2, 0.4, 0.5, 0.6 around the AI (0.3 is already decided).
+2. Metrics placed in 0.2 for Linux and in 0.4 for Windows (added on 2026-11-04 after ADR-0008), rather than in an increment of their own.
 
 ## References
 

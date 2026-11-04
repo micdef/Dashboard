@@ -17,7 +17,7 @@ Dashboard is the final project of the AI developer training at Technofutur TIC (
 ### Features (V1 target)
 
 - **Fleet status**: heartbeats and host state for every supervised machine.
-- **Machine page**: operating system, packages, pending updates, CVE exposure, state, and the logs of that machine.
+- **Machine page**: operating system, packages, pending updates, CVE exposure, state, load (processor, memory, disks), and the logs of that machine.
 - **Logs**: journald, Nginx files, Windows Event Log, and custom formats described by an XML parser definition.
 - **AI**:
   - deterministic rules for known attacks;
@@ -52,7 +52,7 @@ The database code uses only features available in SQL Server **Standard** editio
 The project is in its **design phase**: the architecture decisions are being finalised, and no code has been written yet. Planned increments:
 
 1. Heartbeat end to end
-2. Linux logs and the machine page
+2. Linux logs and metrics, and the machine page
 3. AI: data preparation, training, ONNX inference, LLM report
 4. Windows agent and XML log parser
 5. Rules and CVE
@@ -90,7 +90,7 @@ Dashboard est le projet de fin de la formation Développeur IA de Technofutur TI
 ### Fonctionnalités (cible de la V1)
 
 - **État du parc** : heartbeats et état de chaque machine supervisée.
-- **Fiche par machine** : système d'exploitation, paquets, mises à jour en attente, exposition aux CVE, état, et les logs de la machine.
+- **Fiche par machine** : système d'exploitation, paquets, mises à jour en attente, exposition aux CVE, état, charge (processeur, mémoire, disques), et les logs de la machine.
 - **Logs** : journald, fichiers Nginx, journal d'événements Windows, et formats propres décrits par une définition de parser XML.
 - **IA** :
   - des règles déterministes pour les attaques connues ;
@@ -125,7 +125,7 @@ Le code de la base n'utilise que des fonctions disponibles dans l'édition **Sta
 Le projet est en **phase de conception** : les décisions d'architecture sont en cours de finalisation, et aucun code n'est encore écrit. Incréments prévus :
 
 1. Heartbeat de bout en bout
-2. Logs Linux et fiche par machine
+2. Logs et métriques Linux, et fiche par machine
 3. IA : préparation des données, entraînement, inférence ONNX, rapport du LLM
 4. Agent Windows et parser XML
 5. Règles et CVE

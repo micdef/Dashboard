@@ -32,7 +32,7 @@ Open points marked "raised in review" were added after the team review of 2026-1
 | [0005](0005-backend-split-into-collector-and-api.md) | Backend split into a Collector and an API process | Accepted | 2026-11-04 |
 | [0006](0006-hexagonal-cores-and-solution-structure.md) | Hexagonal cores where there is domain logic, no CQRS | Accepted | 2026-11-04 |
 | [0007](0007-machine-identity-and-enrolment.md) | Machine identity by client certificate, agent enrolment | Superseded by ADR-0017 | 2026-11-04 |
-| [0008](0008-log-format-otlp-data-model.md) | Log format: the OTLP logs data model | Proposed | 2026-11-03 |
+| [0008](0008-telemetry-format-otlp-logs-and-metrics.md) | Telemetry format: the OTLP logs and metrics data models | Accepted | 2026-11-04 |
 | [0009](0009-ai-pipeline.md) | AI pipeline: rules, .NET preparation, Python training, ONNX, LLM | Proposed | 2026-11-03 |
 | [0010](0010-llm-hosting.md) | Hosting the local LLM on the dedicated AI node | Proposed | 2026-11-03 |
 | [0011](0011-cve-source.md) | Source of CVE exposure data | Accepted | 2026-11-04 |
