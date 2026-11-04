@@ -36,7 +36,7 @@ Open points marked "raised in review" were added after the team review of 2026-1
 | [0009](0009-ai-pipeline.md) | AI pipeline: rules, .NET preparation, Python training, ONNX, LLM | Accepted | 2026-11-04 |
 | [0010](0010-llm-hosting.md) | Hosting the local LLM on the dedicated AI node | Accepted | 2026-11-04 |
 | [0011](0011-cve-source.md) | Source of CVE exposure data | Accepted | 2026-11-04 |
-| [0012](0012-storage-and-retention.md) | Storage and retention: hot, cold and inventory history | Proposed | 2026-11-03 |
+| [0012](0012-storage-and-retention.md) | Storage and retention: hot, cold and inventory history | Accepted | 2026-11-04 |
 | [0013](0013-remote-commands.md) | Remote commands without SSH | Proposed | 2026-11-03 |
 | [0014](0014-authentication-and-roles.md) | Web authentication: local accounts and roles | Proposed | 2026-11-03 |
 | [0015](0015-increment-order.md) | Order of the increments up to V1 | Proposed | 2026-11-03 |
