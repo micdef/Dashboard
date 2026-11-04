@@ -39,7 +39,8 @@ V1 must be a complete, working system with integrated AI, presented to the train
 
 ### Negative
 
-- The AI is trained on a few weeks of data from Linux machines only; Windows logs arrive in 0.4 and require retraining. Until then, Windows sources are not covered by the model (ADR-0009, open point 3).
+- The AI is trained on a few weeks of data from Linux machines only; Windows logs and metrics arrive in 0.4 and require retraining. Until then, Windows sources are flagged "not covered by the model" (ADR-0009).
+- The V1 model uses metrics as input (ADR-0009), so the Linux metrics of 0.2 must be collected long enough before 0.3 to be usable for training.
 
 ## Open points
 
