@@ -51,8 +51,8 @@ The database code uses only features available in SQL Server **Standard** editio
 
 The project is in its **design phase**: the architecture decisions are being finalised, and no code has been written yet. Planned increments:
 
-1. Heartbeat end to end
-2. Linux logs and metrics, and the machine page
+1. Heartbeat end to end, with agent enrolment
+2. Linux logs and metrics, the machine page, accounts and the audit trail
 3. AI: data preparation, training, ONNX inference, LLM report
 4. Windows agent and XML log parser
 5. Rules and CVE
@@ -124,8 +124,8 @@ Le code de la base n'utilise que des fonctions disponibles dans l'édition **Sta
 
 Le projet est en **phase de conception** : les décisions d'architecture sont en cours de finalisation, et aucun code n'est encore écrit. Incréments prévus :
 
-1. Heartbeat de bout en bout
-2. Logs et métriques Linux, et fiche par machine
+1. Heartbeat de bout en bout, avec l'enrôlement des agents
+2. Logs et métriques Linux, fiche par machine, comptes et audit
 3. IA : préparation des données, entraînement, inférence ONNX, rapport du LLM
 4. Agent Windows et parser XML
 5. Règles et CVE

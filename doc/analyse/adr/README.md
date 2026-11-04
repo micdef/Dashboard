@@ -39,7 +39,7 @@ Open points marked "raised in review" were added after the team review of 2026-1
 | [0012](0012-storage-and-retention.md) | Storage and retention: hot, cold and inventory history | Accepted | 2026-11-04 |
 | [0013](0013-remote-commands.md) | Remote commands without SSH | Accepted | 2026-11-04 |
 | [0014](0014-authentication-and-roles.md) | Web authentication: local accounts and roles | Accepted | 2026-11-04 |
-| [0015](0015-increment-order.md) | Order of the increments up to V1 | Proposed | 2026-11-03 |
+| [0015](0015-increment-order.md) | Order of the increments up to V1 | Accepted | 2026-11-04 |
 | [0016](0016-components-and-deployment-with-enrolment.md) | Components and deployment topology, with the Enrolment service | Accepted | 2026-11-04 |
 | [0017](0017-machine-identity-two-independent-cas.md) | Machine identity with two independent certificate authorities | Accepted | 2026-11-04 |
 | [0018](0018-cold-storage-any-smb3-file-server.md) | Cold storage on any SMB 3 file server, mounted by the operating system | Accepted | 2026-11-04 |
