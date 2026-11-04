@@ -1,0 +1,27 @@
+# Local working notes of the AI assistant (not part of the repository)
+.claude/
+
+# Visual Studio and .NET build output
+.vs/
+bin/
+obj/
+*.user
+*.suo
+TestResults/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Data, models and outputs are never versioned (only their description is)
+data/
+models/
+*.onnx
+*.parquet
+
+# Generated developer documentation
+doc/dev/generated/
