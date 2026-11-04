@@ -1,6 +1,6 @@
 # NAS: QNAP TS-133
 
-Deployment notes for the NAS that holds the log archive, the prepared training data and the exported models (ADR-0012). The settings below come from QNAP's documentation; they are **not yet tested** on this NAS.
+Deployment notes for the NAS of the home lab, which holds the cold storage: the log archive, the prepared training data and the exported models (ADR-0012, ADR-0018). The general requirements and the other platforms are in [cold-storage.md](cold-storage.md). The settings below come from QNAP's documentation; they are **not yet tested** on this NAS.
 
 ## Hardware
 
