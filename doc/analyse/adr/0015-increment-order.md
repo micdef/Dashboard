@@ -17,7 +17,7 @@ V1 must be a complete, working system with integrated AI, presented to the train
 |---|---|
 | 0.1 | Heartbeat end to end: database, data gateway, Backend, Linux agent, status page |
 | 0.2 | Linux logs, Linux metrics (processor, memory, disks; ADR-0008) and the machine page |
-| 0.3 | AI: .NET preparation, Python training, ONNX inference, LLM report |
+| 0.3 | AI: LLM benchmark (ADR-0010), .NET preparation, Python training, ONNX inference, LLM report |
 | 0.4 | Windows agent (logs and metrics) and XML log parser |
 | 0.5 | Rules and CVE |
 | 0.6 | Remote commands |
