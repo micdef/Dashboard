@@ -33,6 +33,7 @@ Dashboard is the final project of the AI developer training at Technofutur TIC (
 | Agent (.NET Worker Service) | runs on each machine; opens the connection itself (gRPC, mutual TLS) |
 | Collector | receives agent data, computes host state, applies rules, delivers commands |
 | API | serves the web interface, authorises users, creates commands |
+| Enrolment service | private certificate authority for the agents: enrolment, renewal, revocation |
 | Data gateway | the only process with database access (stored procedures, TVPs, views) |
 | Web site (Blazor Web App) | the user interface |
 | AI node | Python training and the local LLM; no database access |
@@ -105,6 +106,7 @@ Dashboard est le projet de fin de la formation Développeur IA de Technofutur TI
 | Agent (Worker Service .NET) | tourne sur chaque machine ; ouvre lui-même la connexion (gRPC, TLS mutuel) |
 | Collector | reçoit les données des agents, calcule l'état des machines, applique les règles, délivre les commandes |
 | API | sert l'interface web, autorise les utilisateurs, crée les commandes |
+| Service d'enrôlement | autorité de certification privée des agents : enrôlement, renouvellement, révocation |
 | Passerelle de données (very-back-end) | seul processus qui accède à la base (procédures stockées, TVP, vues) |
 | Site web (Blazor Web App) | l'interface utilisateur |
 | Nœud IA | entraînement Python et LLM local ; aucun accès à la base |

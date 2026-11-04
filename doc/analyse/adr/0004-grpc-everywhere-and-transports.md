@@ -22,6 +22,8 @@ The system has the following links:
 
 Supervised machines must not expose any inbound port for the system.
 
+ADR-0007 later adds two links that follow the rules of this ADR: agent → Enrolment service (enrolment and renewal, opened by the agent) and Enrolment service → API (a Unix domain socket reserved for it). See also ADR-0016.
+
 ## Decision
 
 - **gRPC on every link between Dashboard components**, including between the web site and the Backend. Two links use third-party protocols and are exceptions: the LLM server's own HTTP API (Backend → AI node) and the NAS file protocol (decided in ADR-0012).

@@ -25,13 +25,13 @@ Open points marked "raised in review" were added after the team review of 2026-1
 
 | ADR | Title | Status | Date |
 |---|---|---|---|
-| [0001](0001-components-and-deployment.md) | Components and deployment topology | Accepted | 2026-11-04 |
+| [0001](0001-components-and-deployment.md) | Components and deployment topology | Superseded by ADR-0016 | 2026-11-04 |
 | [0002](0002-sql-server-developer-edition.md) | SQL Server 2025 Standard Developer edition | Accepted | 2026-11-04 |
 | [0003](0003-data-access-through-a-single-gateway.md) | Data access through a single gateway, ADO.NET only | Accepted | 2026-11-04 |
 | [0004](0004-grpc-everywhere-and-transports.md) | gRPC everywhere, mTLS for agents, Unix sockets inside the host | Accepted | 2026-11-04 |
 | [0005](0005-backend-split-into-collector-and-api.md) | Backend split into a Collector and an API process | Accepted | 2026-11-04 |
 | [0006](0006-hexagonal-cores-and-solution-structure.md) | Hexagonal cores where there is domain logic, no CQRS | Accepted | 2026-11-04 |
-| [0007](0007-machine-identity-and-enrolment.md) | Machine identity by client certificate, agent enrolment | Proposed | 2026-11-03 |
+| [0007](0007-machine-identity-and-enrolment.md) | Machine identity by client certificate, agent enrolment | Accepted | 2026-11-04 |
 | [0008](0008-log-format-otlp-data-model.md) | Log format: the OTLP logs data model | Proposed | 2026-11-03 |
 | [0009](0009-ai-pipeline.md) | AI pipeline: rules, .NET preparation, Python training, ONNX, LLM | Proposed | 2026-11-03 |
 | [0010](0010-llm-hosting.md) | Hosting the local LLM on the dedicated AI node | Proposed | 2026-11-03 |
@@ -40,3 +40,4 @@ Open points marked "raised in review" were added after the team review of 2026-1
 | [0013](0013-remote-commands.md) | Remote commands without SSH | Proposed | 2026-11-03 |
 | [0014](0014-authentication-and-roles.md) | Web authentication: local accounts and roles | Proposed | 2026-11-03 |
 | [0015](0015-increment-order.md) | Order of the increments up to V1 | Proposed | 2026-11-03 |
+| [0016](0016-components-and-deployment-with-enrolment.md) | Components and deployment topology, with the Enrolment service | Accepted | 2026-11-04 |

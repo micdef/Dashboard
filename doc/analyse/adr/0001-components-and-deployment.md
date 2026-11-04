@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Accepted |
+| Status | Superseded by [ADR-0016](0016-components-and-deployment-with-enrolment.md) (2026-11-04) |
 | Date | 2026-11-03 (proposed), 2026-11-04 (accepted), 2026-11-04 (amended after ADR-0005) |
 | Decider | Michaël Defraene (product owner, architect) |
 | Drafted by | Claude (main developer); the decisions had a second reading by the architecture review agent during scoping |
