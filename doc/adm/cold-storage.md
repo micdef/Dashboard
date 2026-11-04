@@ -15,6 +15,8 @@ The cold storage holds the log archive, the prepared training data and the expor
 | Raw log archive | read and write | no access |
 | Prepared training data (pseudonymised) | read and write | read only |
 | Models | read only | read and write |
+| Audit anchors (ADR-0013) | create files only, no modification or deletion (WORM if the server offers it) | no access |
+| Audit archive (ADR-0013) | read and write | no access |
 
 ## Server side
 
