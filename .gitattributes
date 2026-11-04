@@ -1,0 +1,27 @@
+# Line endings: CRLF in the working tree by default (Windows development),
+# normalised to LF in the repository.
+* text=auto eol=crlf
+
+# Files executed or read on Linux hosts keep LF.
+*.sh        text eol=lf
+*.service   text eol=lf
+*.socket    text eol=lf
+
+# Language-aware diffs
+*.cs        diff=csharp
+*.py        diff=python
+*.md        diff=markdown
+
+# Binary files: never converted, never merged as text
+*.jpg       binary
+*.jpeg      binary
+*.png       binary
+*.gif       binary
+*.ico       binary
+*.pdf       binary
+*.zip       binary
+*.gz        binary
+*.dacpac    binary
+*.onnx      binary
+*.parquet   binary
+*.pfx       binary
