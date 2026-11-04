@@ -6,7 +6,7 @@ This folder holds the Architecture Decision Records (ADR) of the Dashboard proje
 
 - One decision per file, named `NNNN-short-title.md`, numbered in creation order. Numbers are never reused.
 - An ADR is written in English by the main developer, validated by the product owner (who decides), then reviewed for format and accuracy.
-- An accepted ADR is never rewritten to change the decision. A new ADR supersedes it, and both files reference each other. (Single exception, before the repository was published: ADR-0001 and ADR-0004 were amended on the day of their acceptance to follow ADR-0005. The rule applies without exception from then on.)
+- An accepted ADR is never rewritten to change the decision. A new ADR supersedes it, and both files reference each other. (Single exception, before the repository was published: ADR-0001 and ADR-0004 were amended on the day of their acceptance to follow ADR-0005. The rule applies without exception from then on.) Fixing a cross-reference or a name in an accepted ADR, without changing its decision, is an editorial correction and is allowed.
 - Every statement must be exact. A claim that could not be checked is marked **not verified**.
 
 ## Statuses
@@ -30,7 +30,7 @@ Open points marked "raised in review" were added after the team review of 2026-1
 | [0003](0003-data-access-through-a-single-gateway.md) | Data access through a single gateway, ADO.NET only | Accepted | 2026-11-04 |
 | [0004](0004-grpc-everywhere-and-transports.md) | gRPC everywhere, mTLS for agents, Unix sockets inside the host | Accepted | 2026-11-04 |
 | [0005](0005-backend-split-into-collector-and-api.md) | Backend split into a Collector and an API process | Accepted | 2026-11-04 |
-| [0006](0006-hexagonal-cores-and-solution-structure.md) | Hexagonal cores where there is domain logic, no CQRS | Proposed | 2026-11-03 |
+| [0006](0006-hexagonal-cores-and-solution-structure.md) | Hexagonal cores where there is domain logic, no CQRS | Accepted | 2026-11-04 |
 | [0007](0007-machine-identity-and-enrolment.md) | Machine identity by client certificate, agent enrolment | Proposed | 2026-11-03 |
 | [0008](0008-log-format-otlp-data-model.md) | Log format: the OTLP logs data model | Proposed | 2026-11-03 |
 | [0009](0009-ai-pipeline.md) | AI pipeline: rules, .NET preparation, Python training, ONNX, LLM | Proposed | 2026-11-03 |

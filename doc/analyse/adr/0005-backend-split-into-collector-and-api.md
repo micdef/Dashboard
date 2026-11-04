@@ -22,7 +22,7 @@ The first draft of this ADR proposed one process with two endpoints. The product
 | **Collector** | agents | mTLS over TCP, on the interface facing the supervised machines | `ingest` |
 | **API** | the web site | a Unix domain socket | `manage` |
 
-- Both processes use the same domain core, `Fleet.Core` (ADR-0006).
+- Both processes use the same domain core, the Fleet core (ADR-0006).
 - Responsibilities:
   - Collector: agent authentication (ADR-0007), ingestion of logs, heartbeats and inventory, host state, real-time rules, the agent command streams and the delivery of commands.
   - API: every service the web site uses, including the relay of account operations (ADR-0014), user authorisation per role, and the creation of commands.
