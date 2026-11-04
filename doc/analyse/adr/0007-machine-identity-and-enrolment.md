@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Accepted |
+| Status | Superseded by [ADR-0017](0017-machine-identity-two-independent-cas.md) (2026-11-04) |
 | Date | 2026-11-03 (proposed), 2026-11-04 (accepted) |
 | Decider | Michaël Defraene (product owner, architect) |
 | Drafted by | Claude (main developer); the decisions had a second reading by the architecture review agent during scoping |

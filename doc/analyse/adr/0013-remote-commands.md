@@ -14,7 +14,7 @@ The initial outline planned to send commands to the machines through SSH. Remote
 
 ## Decision
 
-- **No SSH.** The agent opens a **bidirectional gRPC stream** to the Backend over mTLS (ADR-0004, ADR-0007); commands arrive on this stream. No inbound port is opened on the machines.
+- **No SSH.** The agent opens a **bidirectional gRPC stream** to the Backend over mTLS (ADR-0004, ADR-0017); commands arrive on this stream. No inbound port is opened on the machines.
 - Commands are **typed messages from a catalogue** (for example "restart service X"), never free text.
 - Each machine has a **local allowlist** that only root (or an administrator on Windows) can modify. A command outside the allowlist is refused by the agent, whatever the Backend sends.
 - The agent runs fixed commands directly, **never through a shell**: on Linux with limited sudoers rules, on Windows with `ServiceController`. Each execution has a **maximum duration** and a **capped output size**.
@@ -37,7 +37,7 @@ The initial outline planned to send commands to the machines through SSH. Remote
 
 ### Negative
 
-- Until command signing (V2), the agent trusts any allowed command coming from an authenticated Backend; the allowlist and the agent's validation of the Backend's certificate (ADR-0007) are the main safeguards.
+- Until command signing (V2), the agent trusts any allowed command coming from an authenticated Backend; the allowlist and the agent's validation of the Collector's certificate (ADR-0017) are the main safeguards.
 - Each new command type needs a catalogue entry, an agent implementation and an allowlist entry.
 - If the remote commands increment is dropped (ADR-0015), the stream, the allowlist and the command lifecycle must not ship half-finished.
 
@@ -48,4 +48,4 @@ The initial outline planned to send commands to the machines through SSH. Remote
 
 ## References
 
-- ADR-0004, ADR-0007, ADR-0014, ADR-0015.
+- ADR-0004, ADR-0014, ADR-0015, ADR-0017.
