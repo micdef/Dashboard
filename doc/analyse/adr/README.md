@@ -54,3 +54,4 @@ Open points marked "raised in review" were added after the team review of 2026-1
 | [0019](0019-web-authentication-verified-by-the-api.md) | Web authentication verified by the API, with step-up for sensitive actions | Accepted | 2026-11-05 |
 | [0020](0020-remote-commands-and-keyed-audit-trail.md) | Remote commands, and a keyed audit trail that cannot be purged early | Accepted | 2026-11-05 |
 | [0021](0021-machine-identity-from-the-first-increment.md) | Machine identity from the first increment, with a dedicated revocation list service | Accepted | 2026-11-05 |
+| [0022](0022-operations-alerts-backups-and-reconciliation.md) | Operations: alerts, monitoring of the monitor, backups and reconciliation | Accepted | 2026-11-05 |

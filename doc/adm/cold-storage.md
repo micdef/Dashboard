@@ -15,6 +15,7 @@ The cold storage holds the log archive, the prepared training data and the expor
 | Raw log archive | read and write | no access | no access |
 | Prepared training data (pseudonymised) | read and write | read only | no access |
 | Models | read only | read and write | no access |
+| Database backups (ADR-0022): written by the SQL Server service account only | no access | no access | no access |
 | Audit archive, hourly files that are also the anchors (ADR-0020) | **create files only**: no modification or deletion, owner's implicit rights removed; WORM folder if the server offers one | no access | read only |
 
 ## Server side
