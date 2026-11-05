@@ -65,7 +65,7 @@ Dashboard supervises a small fleet of Linux and Windows servers: heartbeats, inv
 
 ### No overlapping pull requests
 
-- Claude is the only one who opens pull requests, and **two open pull requests never touch the same file**.
+- Among the agents, only Claude opens pull requests. **Two open pull requests never touch the same file**, the product owner's included.
 - Before each `gh pr create`: compare `git diff --name-only origin/release/X.Y.Z...HEAD` with the files of the open pull requests (`gh pr view <n> --json files`). If a file is shared, wait for the other one to be merged.
 - Files at risk (once they exist): `CHANGELOG.md`, test READMEs, solution files, the central package versions file, the roadmap, `CONTRIBUTING.md`.
 - Chains of pull requests (each branch containing the previous one) are **not used** on this project until the product owner approves them.
