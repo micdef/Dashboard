@@ -28,9 +28,13 @@ __pycache__/
 # Data, model and experiment files are also ignored wherever they are, in case
 # one is saved outside those folders: raw logs hold personal data (ADR-0012).
 *.csv
+*.csv.*
 *.jsonl
+*.jsonl.*
 *.ndjson
 *.log
+*.log.*
+*.evtx
 *.parquet
 *.npy
 *.npz
@@ -41,19 +45,50 @@ __pycache__/
 *.safetensors
 *.h5
 *.onnx
-mlruns/
-outputs/
 
-# Small synthetic datasets used by the tests, never real logs.
+# Database backups and files hold data too.
+*.bak
+*.bacpac
+*.mdf
+*.ldf
+*.db
+*.sqlite
+
+# Experiment tracking and training outputs, at the root only (same reason as
+# /data/: an unanchored "outputs/" would also ignore a C# folder named Outputs/).
+/mlruns/
+/outputs/
+
+# Small synthetic datasets used by the tests, never real logs. This exception
+# comes before the key and configuration rules on purpose: keys and
+# certificates are never versioned, not even for tests (the tests generate
+# throwaway ones when they start), and a test configuration is a *.conf.example.
 !test/**/fixtures/**
+!tests/**/fixtures/**
 
-# Keys and secrets are never versioned.
+# Keys, certificates and secrets are never versioned. Local development secrets
+# (for instance the audit and pseudonymisation keys) go in /secrets/ or carry
+# the .secret extension.
+/secrets/
+*.secret
 *.pfx
 *.p12
 *.key
 *.pem
 *.snk
+*.gpg
+*.asc
+*.ppk
+*.kdbx
+*.jks
+id_rsa*
+id_ecdsa*
+id_ed25519*
 .env
+.env.*
+!.env.example
+secrets.json
+appsettings.*.local.json
 
 # Real configuration files hold secrets: only the *.conf.example files, without
 # any secret, are versioned.

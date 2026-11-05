@@ -117,6 +117,7 @@ When Claude opens several pull requests while the product owner is away, they fo
 - Concurrency tests are run several times. **A flaky test is a finding, not bad luck.**
 - Network tests: **never port 0, never a port "freed" then reused**. A fixed block reserved for tests (17000-17999, below the dynamic range), a sub-block of 100 ports per test project, a base movable by an environment variable. If the port is taken, the test **fails** with a clear message; it never skips.
 - One test starts each tier with its **shipped configuration**, to validate the real ports.
+- Keys and certificates are never versioned, not even for tests: the tests generate throwaway ones when they start. A test configuration is a `*.conf.example`.
 - SQL tests need a test database (name prefixed `TEST_` or `DEV_`):
   - with no database configured, they are **skipped visibly**: reported and counted as skipped, never as passed;
   - a configured database that cannot be reached, or whose name has the wrong prefix, makes the run **fail**, never skip;
@@ -185,7 +186,7 @@ Same standard as C#: production code, not notebooks. Python only **trains** the 
 - Always the project's **venv**, never the system Python. Dependencies declared in `pyproject.toml`, **pinned by a lock file**, audited by Cassian.
 - Python version fixed (`requires-python`), the same locally and in CI.
 - Layout `src/<package>/` + `tests/`, separate from `notebooks/` (exploration only, never imported).
-- Raw data, models and outputs live in `/data/` and `/models/` at the repository root and are **never versioned**; `.gitignore` also excludes data, model and experiment files wherever they are. Only their **description** is versioned (source, version, hash). The small datasets used by the tests are synthetic, never real logs, and live in `test/**/fixtures/`.
+- Raw data, models and outputs live in `/data/` and `/models/` at the repository root and are **never versioned**; `.gitignore` also excludes data, model and experiment files wherever they are. Only their **description** is versioned (source, version, hash). The small datasets used by the tests are synthetic, never real logs, and live in `test/**/fixtures/` (`tests/**/fixtures/` for Python).
 
 ### Code quality
 
@@ -220,7 +221,7 @@ Same standard as C#: production code, not notebooks. Python only **trains** the 
 ## 9. Operations
 
 - Target hosts run **Fedora or Windows** only: `dnf`, SELinux, firewalld. Scheduled tasks on Linux are **systemd timers**, never cron.
-- **Everything is set in the configuration file**, nothing hard-coded in a script or a service (endpoints, paths, delays, retries). If a value changes, the configuration changes, never the code. The repository holds only `*.conf.example` files, without any secret; the real `*.conf` files stay on the hosts (`.gitignore`).
+- **Everything is set in the configuration file**, nothing hard-coded in a script or a service (endpoints, paths, delays, retries). If a value changes, the configuration changes, never the code. The repository holds only `*.conf.example` files, without any secret; the real `*.conf` files stay on the hosts (`.gitignore`). A configuration that must be versioned, even without a secret, is named `*.conf.example`. Local development secrets (for instance the audit and pseudonymisation keys) go in `/secrets/` or carry the `.secret` extension, both ignored.
 - Changes on the product owner's servers and firewall are applied by him: Claude prepares the files and the commands, he runs them and returns the output.
 
 ## 10. Tooling pitfalls observed (Windows)
