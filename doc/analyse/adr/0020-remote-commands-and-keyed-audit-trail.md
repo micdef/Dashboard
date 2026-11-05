@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Accepted |
+| Status | Superseded by [ADR-0024](0024-audit-trail-anchored-by-the-verifier.md) |
 | Date | 2026-11-05 |
 | Decider | Michaël Defraene (product owner, architect) |
 | Drafted by | Claude (main developer), after the second reading of 2026-11-04 |
