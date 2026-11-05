@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Accepted |
+| Status | Superseded by [ADR-0023](0023-web-sessions-issued-by-the-api.md) |
 | Date | 2026-11-05 |
 | Decider | Michaël Defraene (product owner, architect) |
 | Drafted by | Claude (main developer), after the second reading of 2026-11-04 |
@@ -83,4 +83,4 @@ This ADR keeps every decision of ADR-0014 except where it says otherwise, and mo
 - Microsoft Learn, *Configure ASP.NET Core to work with proxy servers and load balancers* (consulted 2026-11-04).
 - Microsoft Learn, *ASP.NET Core Blazor authentication and authorization* (revalidation interval) and *Key management in ASP.NET Core* (key ring storage), cited by the second reading; not re-read by the main developer.
 - [Second reading report](../reviews/2026-11-04-second-reading.md), finding B1 and I7.
-- ADR-0003, ADR-0004, ADR-0005, ADR-0020, ADR-0014 (superseded), ADR-0020.
+- ADR-0003, ADR-0004, ADR-0005, ADR-0014 (superseded), ADR-0020.
