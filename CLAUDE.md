@@ -35,7 +35,7 @@ Dashboard supervises a small fleet of Linux and Windows servers: heartbeats, inv
 - `main` holds published versions. `dev` (created from `main`) receives finished versions before they reach `main`. `release/X.Y.Z` (from `dev`) holds the work of one version.
 - `feature/…`, `fix/…`, `docs/…`, `chore/…`, `test/…` start from `release/X.Y.Z` (or from the previous branch of a chain, see "Chains of pull requests"). `hotfix/…` starts from `main`, then is carried into `dev` and the current version.
 - Changes go up feature → release → dev → main, **always through a pull request**.
-- Annotated tag `vX.Y.Z` on `main`, and a **GitHub pre-release for every 0.x.0 version** ("vX.Y.Z - <title>"), created by Claude after the product owner has merged the version into `main`, and announced when it is created. A pre-release created by Claude carries no agent package: the signed packages are built and published by the product owner, who holds the signing keys (ADR-0025).
+- Annotated tag `vX.Y.Z` on `main`, and a **GitHub pre-release for every 0.x.0 version** ("vX.Y.Z - <title>"), created by Claude after the product owner has merged the version into `main`, and announced when it is created. Once the tag and the pre-release (or the release) exist, Claude deletes `release/X.Y.Z`: only `main` and `dev` remain. A pre-release created by Claude carries no agent package: the packages are signed by the product owner, who holds the signing keys (ADR-0025).
 - Branch names are lowercase English words with hyphens.
 
 ### Commits and pull requests
@@ -45,11 +45,11 @@ Dashboard supervises a small fleet of Linux and Windows servers: heartbeats, inv
 - Keep the attribution lines (`Co-Authored-By`, "Generated with Claude Code").
 - **Merge commits only**: never squash, never rebase. **No history rewriting** on a shared branch. Merged branches are deleted by Claude, locally and on GitHub.
 - SemVer; before 1.0.0: `0.x.y`, with `-alpha.N` / `-beta.N`.
-- GitHub rulesets (to be set up by the product owner), on `main`, `dev` and `release/**`: pull request required, required checks, **branch up to date before merging** (the checks run against the current base), merge commit only, no force push, no deletion, no bypass. Tags `v*` can be neither updated nor deleted. The exact ruleset options are **not verified** against the GitHub documentation yet.
+- GitHub rulesets (to be set up by the product owner), on `main`, `dev` and `release/**`: pull request required, required checks, **branch up to date before merging** (the checks run against the current base), merge commit only, no force push, no bypass. Deletion is forbidden on `main` and `dev` only, since `release/X.Y.Z` is deleted after its version is published. Tags `v*` can be neither updated nor deleted. The exact ruleset options are **not verified** against the GitHub documentation yet.
 
 ### Who does what
 
-- **The product owner reviews and merges every pull request** into `main`, `dev` and `release/X.Y.Z`, with a merge commit. Claude never merges. This replaces, on this project, any merge delegation granted in the product owner's user-level instructions.
+- **The product owner reviews and merges every pull request** into `main`, `dev` and `release/X.Y.Z`, with a merge commit. Claude never merges a pull request. This replaces, on this project, any merge delegation granted in the product owner's user-level instructions.
 - **Claude manages the rest of Git**: creating branches, pushing, opening pull requests, deleting merged branches, pulling the merged changes into the local copy, the annotated tag and the GitHub pre-release.
 - Agents other than Claude never merge and never push.
 
@@ -106,6 +106,7 @@ When Claude opens several pull requests while the product owner is away, they fo
 
 - Build and tests on every pull request to `main`, `dev` and `release/**`, plus a safeguard that fails if a test project is not run **or runs zero tests**.
 - **One required job runs on every pull request, without path filters**: a required check that never runs would block the merge. This job fails if a job it depends on was skipped, unless that job's path filter shows that nothing relevant changed.
+- `.gitignore` stops neither `git add -f` nor a file already tracked: a CI job refuses data, model and key files outside the test fixtures, and GitHub secret scanning with push protection is turned on.
 - Claude never polls the CI: the app reports failures.
 
 ## 4. Tests
