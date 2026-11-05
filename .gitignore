@@ -17,9 +17,12 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Data, models and outputs are never versioned (only their description is)
-data/
-models/
+# Data, models and outputs are never versioned (only their description is).
+# Anchored to the repository root: an unanchored "data/" or "models/" would
+# also ignore C# source folders such as src/<Project>/Models/ (Git ignores
+# case on Windows).
+/data/
+/models/
 *.onnx
 *.parquet
 
