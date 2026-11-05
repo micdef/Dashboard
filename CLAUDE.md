@@ -35,7 +35,7 @@ Dashboard supervises a small fleet of Linux and Windows servers: heartbeats, inv
 - `main` holds published versions. `dev` (created from `main`) receives finished versions before they reach `main`. `release/X.Y.Z` (from `dev`) holds the work of one version.
 - `feature/…`, `fix/…`, `docs/…`, `chore/…`, `test/…` start from `release/X.Y.Z` (or from the previous branch of a chain, see "Chains of pull requests"). `hotfix/…` starts from `main`, then is carried into `dev` and into the current `release/X.Y.Z` if one exists.
 - Changes go up feature → release → dev → main, **always through a pull request**.
-- Annotated tag `vX.Y.Z` on `main`, and a **GitHub pre-release for every 0.x.0 version** ("vX.Y.Z - <title>"), created by Claude after the product owner has merged the version into `main`, and announced when it is created. Once the tag and the pre-release (or the release) exist, Claude deletes `release/X.Y.Z`, after checking that it is merged into both `main` and `dev` (`git branch -r --merged origin/main` and `--merged origin/dev` list it): only `main` and `dev` remain. A branch with an open pull request is never deleted. A pre-release created by Claude carries no agent package: the packages are signed by the product owner, who holds the signing keys (ADR-0025).
+- Annotated tag `vX.Y.Z` on `main`, and a **GitHub pre-release for every 0.x.0 version** ("vX.Y.Z - <title>"), created by Claude after the product owner has merged the version into `main`, and announced when it is created. Once the tag and the pre-release (or the release) exist, Claude deletes `release/X.Y.Z` if GitHub has not already done so, after checking that it is merged into both `main` and `dev` (`git branch -r --merged origin/main` and `--merged origin/dev` list it): only `main` and `dev` remain. A branch with an open pull request is never deleted. A pre-release created by Claude carries no agent package: the packages are signed by the product owner, who holds the signing keys (ADR-0025).
 - Branch names are lowercase English words with hyphens.
 
 ### Commits and pull requests
@@ -43,9 +43,15 @@ Dashboard supervises a small fleet of Linux and Windows servers: heartbeats, inv
 - **Conventional Commits**, in English: imperative, lowercase, no final period, under 72 characters. The body says **what and why**, not how.
 - Commit messages are written to a file, then committed with `git commit -F` (the shell mangles some characters).
 - Keep the attribution lines (`Co-Authored-By`, "Generated with Claude Code").
-- **Merge commits only**: never squash, never rebase. **No history rewriting** on a shared branch. Merged branches are deleted by Claude, locally and on GitHub.
+- **Merge commits only**: never squash, never rebase. **No history rewriting** on a shared branch. Merged branches are deleted: GitHub deletes the head branch of a merged pull request, and Claude deletes the local copies and any branch left over.
 - SemVer; before 1.0.0: `0.x.y`, with `-alpha.N` / `-beta.N`.
-- GitHub rulesets (to be set up by the product owner), on `main`, `dev` and `release/**`: pull request required, required checks, **branch up to date before merging** (the checks run against the current base), merge commit only, no force push, no bypass. Deletion is forbidden on `main` and `dev` only, since `release/X.Y.Z` is deleted after its version is published. Tags `v*` can be neither updated nor deleted. The exact ruleset options are **not verified** against the GitHub documentation yet.
+- Repository settings: merge commits only (squash and rebase merging disabled), "Update branch" suggested on pull requests, head branches deleted automatically after merging.
+- GitHub rulesets, all active and without bypass:
+  - *Protect main and dev*: pull request required, merge commit only, review threads resolved before merging, no force push, no deletion. No approval is required (a sole owner cannot approve his own pull requests): the product owner's review is a rule of this file, not enforced by GitHub;
+  - *Protect release branches* (`release/**`): the same, except deletion. With the automatic deletion of head branches, GitHub deletes `release/X.Y.Z` as soon as it is merged into `dev`; Claude deletes it if it is still there once its version is published;
+  - *Protect version tags* (`v*`): a tag can be created, but neither moved nor deleted.
+- The required checks, with **branch up to date before merging**, are added to the branch rulesets with the first CI. Until then, nothing enforces an up-to-date branch. GitHub offers "up to date before merging" as an option of the required checks rule (**not verified** against the GitHub documentation), and a required check that no CI reports would block every merge.
+- Claude Code's project permissions (`.claude/settings.json`, local) deny `gh pr merge`, `gh api -X PUT` and `gh api --method PUT` (GitHub merges a pull request through a PUT call). This makes a merge by Claude harder, not impossible: a deny rule matches a command prefix only, and the product owner's account, which Claude uses, may merge. Claude never edits its permission settings unless the product owner asks for it; a stronger guard (managed settings, a separate account for Claude) is for later.
 
 ### Who does what
 
@@ -83,19 +89,23 @@ No CI exists yet (no project to build). Until it does, a pull request states tha
 ### No overlapping pull requests
 
 - Among the agents, only Claude opens pull requests. **Two open pull requests never touch the same file** (except inside a chain), the product owner's included.
-- Before each `gh pr create`: compare `git diff --name-only origin/release/X.Y.Z...HEAD` with the files of the open pull requests (`gh pr view <n> --json files`). If a file is shared, wait for the other one to be merged.
+- Before each `gh pr create` outside a chain: compare `git diff --name-only origin/release/X.Y.Z...HEAD` with the files of the open pull requests (`gh pr view <n> --json files`). If a file is shared, wait for the other one to be merged.
 - Files at risk (once they exist): `CHANGELOG.md`, test READMEs, solution files, the central package versions file, the roadmap, `CONTRIBUTING.md`.
 
 ### Chains of pull requests
 
 When Claude opens several pull requests while the product owner is away, they form a **chain**, so that he can review and merge them one after the other:
 
-- each branch starts from the previous one, and every pull request targets `release/X.Y.Z`;
-- each pull request states its place in the chain ("2 of 3, after #12"), and the closing report gives the order in which to review and merge;
-- **a chain is merged in order only**: every pull request after the first stays a draft until the previous one is merged;
-- once the previous one is merged, the diff of the next one shrinks to its own commits;
-- merging one pull request must re-run the checks of the next one, so that he never merges on checks run against an old base. The ruleset "branch up to date before merging" enforces it; how the CI re-runs the checks is decided when the CI is written (**not verified**: GitHub may not re-run the checks of a pull request when only its base branch changes). Until then, Claude merges `release/X.Y.Z` into the next branch (never a rebase) and pushes it;
-- if that update has a conflict, Claude does not resolve it alone: it says so in the pull request, and the agents concerned review the resolution before the product owner merges.
+- each branch starts from the previous one, and **each pull request targets the branch of the previous one** (the first targets `release/X.Y.Z`). A pull request merged out of order therefore lands in the previous branch, never in `release/X.Y.Z`;
+- when a pull request is merged, GitHub deletes its branch and retargets the next pull request to `release/X.Y.Z` (**not verified**: to be checked on the first chain); its diff then shows only its own commits;
+- **the product owner merges a pull request of the chain only when the base shown in its header is `release/X.Y.Z`**. If the retarget did not happen, the chain stops there until Claude retargets it;
+- if a pull request is merged out of order, into the previous branch, the previous pull request is not merged until Claude has updated its description, its [SEC] status and its review;
+- at its next run after a chain, Claude checks that every merged pull request reached `release/X.Y.Z` (`git merge-base --is-ancestor`) and says so in the closing report; a pull request closed without merging stops the chain, and Claude retargets or closes the later ones;
+- every pull request of the chain is **ready for review** when it is opened, so that the product owner can merge the whole chain, in order, while Claude is not running;
+- the title carries the place in the chain (`[2/3] …`), the first line of the description says "Do not merge before #n", and the closing report gives the order in which to review and merge;
+- a pull request that contains [SEC] commits of an earlier one carries [SEC] in its title too;
+- once the next one targets `release/X.Y.Z`, and only then, the product owner brings it up to date with GitHub's "Update branch" button, choosing **"Update with merge commit"**, never "Update with rebase"; until the first CI, nothing enforces this step. When Claude is running, it does the update itself;
+- if the update reports a conflict, the product owner does not use GitHub's web conflict editor: the chain stops there, and Claude resolves the conflict at its next run, says so in the pull request, and the agents concerned review the resolution before he merges.
 
 ### Changelog
 
@@ -104,7 +114,7 @@ When Claude opens several pull requests while the product owner is away, they fo
 
 ### CI
 
-- Build and tests on every pull request to `main`, `dev` and `release/**`, plus a safeguard that fails if a test project is not run **or runs zero tests**.
+- Build and tests on every pull request, whatever its base branch (a pull request of a chain targets the previous branch, which no ruleset covers), plus a safeguard that fails if a test project is not run **or runs zero tests**.
 - **One required job runs on every pull request, without path filters**: a required check that never runs would block the merge. This job fails if a job it depends on was skipped, unless that job's path filter shows that nothing relevant changed.
 - `.gitignore` stops neither `git add -f` nor a file already tracked: a CI job refuses data, model and key files outside the test fixtures, and GitHub secret scanning with push protection is turned on.
 - Claude never polls the CI: the app reports failures.
