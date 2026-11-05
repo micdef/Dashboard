@@ -43,13 +43,15 @@ Dashboard supervises a small fleet of Linux and Windows servers: heartbeats, inv
 - **Conventional Commits**, in English: imperative, lowercase, no final period, under 72 characters. The body says **what and why**, not how.
 - Commit messages are written to a file, then committed with `git commit -F` (the shell mangles some characters).
 - Keep the attribution lines (`Co-Authored-By`, "Generated with Claude Code").
-- **Merge commits only**: never squash, never rebase. **No history rewriting** on a shared branch. Merged branches are deleted by Claude, locally and on GitHub.
+- **Merge commits only**: never squash, never rebase. **No history rewriting** on a shared branch. Merged branches are deleted: GitHub deletes the head branch of a merged pull request, and Claude deletes the local copies and any branch left over.
 - SemVer; before 1.0.0: `0.x.y`, with `-alpha.N` / `-beta.N`.
-- GitHub rulesets (set up on 2026-11-05, the branch ones copied from BoardGamesPlatform), all without bypass:
+- Repository settings: merge commits only (squash and rebase merging disabled), "Update branch" suggested on pull requests, head branches deleted automatically after merging.
+- GitHub rulesets, all active and without bypass:
   - *Protect main and dev*: pull request required, merge commit only, review threads resolved before merging, no force push, no deletion;
   - *Protect release branches* (`release/**`): the same, except deletion, since `release/X.Y.Z` is deleted after its version is published;
-  - *Protect version tags* (`v*`): a tag can be neither moved nor deleted.
-- The required checks, with **branch up to date before merging**, are added to the branch rulesets with the first CI: GitHub enforces an up-to-date branch only through required checks, and a required check that no CI reports would block every merge.
+  - *Protect version tags* (`v*`): a tag can be created, but neither moved nor deleted.
+- The required checks, with **branch up to date before merging**, are added to the branch rulesets with the first CI. Until then, nothing enforces an up-to-date branch. GitHub offers "up to date before merging" as an option of the required checks rule (**not verified** against the GitHub documentation), and a required check that no CI reports would block every merge.
+- Claude Code's project permissions (`.claude/settings.json`, local) deny `gh pr merge`, so that Claude cannot merge a pull request by mistake or through an injected instruction.
 
 ### Who does what
 
@@ -87,20 +89,20 @@ No CI exists yet (no project to build). Until it does, a pull request states tha
 ### No overlapping pull requests
 
 - Among the agents, only Claude opens pull requests. **Two open pull requests never touch the same file** (except inside a chain), the product owner's included.
-- Before each `gh pr create`: compare `git diff --name-only origin/release/X.Y.Z...HEAD` with the files of the open pull requests (`gh pr view <n> --json files`). If a file is shared, wait for the other one to be merged.
+- Before each `gh pr create` outside a chain: compare `git diff --name-only origin/release/X.Y.Z...HEAD` with the files of the open pull requests (`gh pr view <n> --json files`). If a file is shared, wait for the other one to be merged.
 - Files at risk (once they exist): `CHANGELOG.md`, test READMEs, solution files, the central package versions file, the roadmap, `CONTRIBUTING.md`.
 
 ### Chains of pull requests
 
 When Claude opens several pull requests while the product owner is away, they form a **chain**, so that he can review and merge them one after the other:
 
-- each branch starts from the previous one, and every pull request targets `release/X.Y.Z`;
-- each pull request states its place in the chain ("2 of 3, after #12"), and the closing report gives the order in which to review and merge;
+- each branch starts from the previous one, and **each pull request targets the branch of the previous one** (the first targets `release/X.Y.Z`). A pull request merged out of order therefore lands in the previous branch, never in `release/X.Y.Z`;
+- when a pull request is merged, GitHub deletes its branch and retargets the next pull request to `release/X.Y.Z` (**not verified**: to be checked on the first chain); its diff then shows only its own commits;
 - every pull request of the chain is **ready for review** when it is opened, so that the product owner can merge the whole chain, in order, while Claude is not running;
-- **a chain is merged in order only**: the first line of each pull request after the first says "Do not merge before #n";
-- once the previous one is merged, the diff of the next one shrinks to its own commits;
-- before merging the next one, its checks must run against the current base: the product owner uses GitHub's "Update branch" button (a merge of the base, never a rebase), which re-runs the checks, and merges once they are green. How the CI re-runs the checks is confirmed when the CI is written (**not verified**: GitHub may not re-run them when only the base branch changes). When Claude is running, it does the update itself;
-- if the update has a conflict, nobody resolves it alone: the chain stops there, Claude says so in the pull request, and the agents concerned review the resolution before the product owner merges.
+- the title carries the place in the chain (`[2/3] …`), the first line of the description says "Do not merge before #n", and the closing report gives the order in which to review and merge;
+- a pull request that contains [SEC] commits of an earlier one carries [SEC] in its title too;
+- before merging the next one, the product owner brings it up to date with GitHub's "Update branch" button, choosing **"Update with merge commit"**, never "Update with rebase"; until the first CI, nothing enforces this step. When Claude is running, it does the update itself;
+- if the update reports a conflict, the product owner does not use GitHub's web conflict editor: the chain stops there, and Claude resolves the conflict at its next run, says so in the pull request, and the agents concerned review the resolution before he merges.
 
 ### Changelog
 
