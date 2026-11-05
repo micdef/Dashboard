@@ -32,11 +32,7 @@ QNAP notes that encryption costs processor time. The TS-133 has an ARM processor
 
 ## Accounts and shares
 
-| Share | Backend account | AI node account |
-|---|---|---|
-| Raw log archive | read and write | no access |
-| Prepared training data (pseudonymised) | read and write | read only |
-| Models | read only | read and write |
+The shares and the rights of each account are listed once, in [cold-storage.md](cold-storage.md#requirements), so that the two pages cannot disagree. Whether QTS can give an account the right to create files without the right to modify or delete them (needed for the audit shares), or offers WORM shared folders, is **not verified**.
 
 ## Checks after setup
 

@@ -19,7 +19,15 @@ This folder holds the Architecture Decision Records (ADR) of the Dashboard proje
 | Superseded by ADR-NNNN | Replaced by a later ADR (linked). |
 | Deprecated | No longer applies, without a replacement. |
 
-Open points marked "raised in review" were added after the team review of 2026-11-03; they are proposals until the product owner decides.
+Open points marked "raised in review" were added after the team review of 2026-11-03; every one of them was decided on 2026-11-04. A second team review took place on 2026-11-04, after the decisions ([report](../reviews/2026-11-04-second-reading.md)).
+
+## Vocabulary
+
+| Term | Meaning |
+|---|---|
+| Backend | the Collector and the API together (ADR-0005) |
+| VBE | the **data gateway** ("very-back-end" in the first outline): the only process with database access (ADR-0003). Both names are used in the ADRs. |
+| Cold storage | the SMB 3 file share that holds the archive, the prepared training data and the models; "the NAS" in the home lab (ADR-0018) |
 
 ## Index
 

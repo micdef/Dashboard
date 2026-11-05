@@ -20,11 +20,11 @@ This ADR complements ADR-0012; it does not replace it. Its decisions on protocol
   - SMB 3 with encryption **required** (clients that do not encrypt are refused), and SMB 1 disabled;
   - the separate accounts and share rights of ADR-0012;
   - encryption at rest of the volume that holds the shares.
-- **Platforms known to meet them** (documented in the administration guide):
+- **Platforms expected to meet them**, according to their documentation (documented in the administration guide; none is tested yet):
 
   | Platform | Encryption required | Encryption at rest |
   |---|---|---|
-  | QNAP (QTS) | SMB 3 and encryption on the shared folders | AES 256-bit volume encryption |
+  | QNAP (QTS) | SMB 3 and encryption on the shared folders; whether QTS can **require** encryption, and not only allow it, is **not verified** | AES 256-bit volume encryption |
   | Windows Server | `Set-SmbShare -EncryptData $true`, with `RejectUnencryptedAccess` left at `$true` | BitLocker |
   | Linux with Samba | `server smb encrypt = required`, globally or per share | LUKS |
 

@@ -23,7 +23,7 @@ Dashboard is the final project of the AI developer training at Technofutur TIC (
   - deterministic rules for known attacks;
   - an anomaly model, fed with log templates and metrics, trained in Python (scikit-learn) and run in .NET through ONNX Runtime;
   - a local LLM that writes reports from computed facts, never from raw logs.
-- **Remote commands**: a fixed catalogue of typed commands, checked against a local allowlist on each machine, with an immutable audit trail. No SSH, no inbound port on the machines.
+- **Remote commands**: a fixed catalogue of typed commands, checked against a local allowlist on each machine, with a tamper-evident audit trail. No SSH, no inbound port on the machines.
 - **Accounts and roles** for the web interface.
 
 ### Architecture
@@ -96,7 +96,7 @@ Dashboard est le projet de fin de la formation Développeur IA de Technofutur TI
   - des règles déterministes pour les attaques connues ;
   - un modèle d'anomalies, alimenté par les templates de logs et les métriques, entraîné en Python (scikit-learn) et exécuté en .NET avec ONNX Runtime ;
   - un LLM local qui rédige des rapports à partir de faits calculés, jamais à partir des logs bruts.
-- **Commandes à distance** : un catalogue fixe de commandes typées, vérifiées par une liste blanche locale sur chaque machine, avec un audit immuable. Pas de SSH, aucun port entrant sur les machines.
+- **Commandes à distance** : un catalogue fixe de commandes typées, vérifiées par une liste blanche locale sur chaque machine, avec un audit dont toute altération est détectée. Pas de SSH, aucun port entrant sur les machines.
 - **Comptes et rôles** pour l'interface web.
 
 ### Architecture

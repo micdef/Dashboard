@@ -41,4 +41,4 @@ The product owner's SQL conventions follow a "contract as a service" approach: t
 
 ## References
 
-- ADR-0001, ADR-0004, ADR-0012.
+- ADR-0004, ADR-0012, ADR-0016.

@@ -22,7 +22,7 @@ Microsoft describes both as licensed for use as a development and test system, n
 
 ## Decision
 
-- The project runs on **SQL Server 2025 Standard Developer edition**, in its own Hyper-V VM (ADR-0001).
+- The project runs on **SQL Server 2025 Standard Developer edition**, in its own Hyper-V VM (ADR-0016).
 - The product owner considers the home lab a learning and continuous development environment; the Developer licence is kept for it.
 - The **Standard edition** (and therefore Standard Developer, which has the same features) is the **reference edition of the repository**: the database code uses only features available in Standard, so anyone who clones the project can run it on Standard or Standard Developer.
 - Enterprise-only features are not used. Express is not a supported target.
@@ -44,11 +44,12 @@ Microsoft describes both as licensed for use as a development and test system, n
 
 ### Negative
 
-- Standard limits that bear on ADR-0012: the degree of parallelism of batch-mode operations is limited to 2, parallel query processing on partitioned tables and indexes is Enterprise only, and online rebuild of nonclustered columnstore indexes is Enterprise only.
+- Standard limits that bear on ADR-0012: the degree of parallelism of batch-mode operations is limited to 2, parallel query processing on partitioned tables and indexes is Enterprise only (section "Data warehouse"; the same page lists "Partitioned table parallelism" as available in Standard on Windows, and the Linux page lists it as Enterprise only, so the two rows must be checked on the target operating system), and online rebuild of nonclustered columnstore indexes is Enterprise only.
 - Licensing remains the responsibility of whoever deploys the project: the Developer editions are licensed for development and test only, and a production deployment needs a paid Standard licence. This is stated in the installation documentation. This ADR is not legal advice; the Microsoft licensing terms prevail.
 
 ## References
 
 - Microsoft Learn, *What's new in SQL Server 2025*, section "New developer editions" (consulted 2026-11-03).
 - Microsoft Learn, *Editions and supported features of SQL Server 2025*, sections "SQL Server editions", "Scale limits", "Scalability and performance", "Data warehouse" and "Management tools" (consulted 2026-11-03).
-- ADR-0001, ADR-0012.
+- Microsoft Learn, *Editions and supported features of SQL Server 2025 on Linux*, section "Scalability and performance" (consulted 2026-11-04, second reading).
+- ADR-0012, ADR-0016.

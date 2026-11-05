@@ -50,7 +50,7 @@ A supervision tool must also never present missing data as good news: a collecti
 | Python project | `.pyproj` (Visual Studio) next to `pyproject.toml` (packaging, dependencies, tools) |
 | `test/` | one test project per `Domain`, `Application` and `Infrastructure` project and per host, plus the architecture test |
 
-ADR-0007 later adds the host project `Dashboard.Enrolment` (Enrolment service), under the rules of this ADR.
+ADR-0016 and ADR-0017 later add the host project `Dashboard.Enrolment` (Enrolment service), under the rules of this ADR.
 
 The solution is a `.slnx`. The .NET CI builds through a solution filter (`.slnf`) that excludes the SQL and Python projects, which have their own CI jobs.
 
