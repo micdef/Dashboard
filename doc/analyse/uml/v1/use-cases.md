@@ -21,12 +21,12 @@ The diagrams are written in [Mermaid](https://mermaid.js.org/), which GitHub and
 | Operator | person, web site | Reader, plus issuing the commands of the catalogue | as above |
 | Admin | person, web site | Operator, plus accounts, roles and configuration | as above |
 | Host administrator | person, on the "app" VM and on the supervised machines | runs the host commands through the host channel of the API; installs the agents | ADR-0023, ADR-0025 |
-| Key holder | person, offline | holds the Server CA key and the package signing keys, which never reach the "app" VM; backs up offline the keys and secrets kept outside the database | ADR-0021, ADR-0022, ADR-0025 |
+| Key holder | person, offline | holds the Server CA key, which never reaches the "app" VM (ADR-0021), and the package signing keys, kept offline (ADR-0025); backs up offline the keys and secrets kept outside the database (ADR-0022) | ADR-0021, ADR-0022, ADR-0025 |
 | Agent | Dashboard program, on each supervised machine | enrols, reports, executes catalogue commands | ADR-0011, ADR-0016, ADR-0021, ADR-0024 |
 | Verifier | Dashboard tool, on another machine than the "app" VM | the independent verification tool, enrolled with a "monitor" identity | ADR-0022, ADR-0024, ADR-0025 |
 | Scheduled jobs | time | systemd timers on Linux, SQL Server Agent for the backups | ADR-0010, ADR-0012, ADR-0021, ADR-0022, ADR-0024 |
 
-The host administrator and the key holder can be the same person. They are two actors because they hold different rights: the host channel on the "app" VM, and keys that never reach it.
+The host administrator and the key holder can be the same person. They are two actors because they hold different rights: the host channel on the "app" VM, and keys kept offline.
 
 ## Reader
 
@@ -39,7 +39,7 @@ flowchart LR
         OwnFactor(["Set up a second factor for one's own account (0.2)"])
         Fleet(["View the fleet status (0.1, development page; 0.2)"])
         Machine(["View a machine: inventory, logs, metrics, certificate (0.2; Windows 0.4)"])
-        Health(["View the health of Dashboard: backups, verifier, revocation lists, sources (0.2)"])
+        Health(["View the health of Dashboard: backups, restore test, verifier, sources (0.2)"])
         AiReport(["View anomalies and AI reports (0.3)"])
         RulesCve(["View rule hits and CVE exposure (0.5)"])
         Alerts(["View alerts (0.2)"])
@@ -61,6 +61,7 @@ flowchart LR
 - When the Collector or the data gateway cannot be reached, the whole fleet is shown as "unknown", never as "down" nor as "up" (ADR-0022). A machine whose certificate is refused is shown "down: refused", one that does not connect "down: silent" (ADR-0021).
 - Anomaly scoring is shown as "unavailable" when the model cannot be loaded, never as "no anomaly"; a source absent from the training data is "not covered by the model"; a failed report is shown as failed, never replaced by an older one (ADR-0009).
 - The audit views mark the entries of 0.1 as "recorded before the audit trail, not proven" (ADR-0025).
+- Each use of an enrolment token is shown with the source address of the request (ADR-0025). An Operator or Admin account without a second factor is shown as a warning (ADR-0019, kept by ADR-0023).
 
 ## Operator and Admin
 
@@ -122,7 +123,7 @@ flowchart LR
     subgraph Hosts ["On the hosts, outside the Dashboard processes"]
         AlertConfig(["Edit the alert configuration file (0.2)"])
         Install(["Install or update the agent from its signed package (RPM 0.1, MSI 0.4)"])
-        DeleteArchive(["Delete expired archive files, where the file server has no WORM retention (0.2)"])
+        DeleteArchive(["Delete expired archive files, where the file server has no WORM retention"])
     end
 
     HostAdmin --> FirstAdmin
@@ -152,7 +153,7 @@ flowchart LR
         SignPackages(["Sign the agent packages (RPM 0.1, MSI 0.4)"])
         BackupKeys(["Back up the keys and secrets kept outside the database"])
         Compromise(["Apply the compromise procedure of the Collector key"])
-        Rekey(["Re-key the Agent CA, every 2 years"])
+        Rekey(["Ship the new Agent CA anchor in a signed package (re-key, every 2 years)"])
     end
 
     KeyHolder --> SignServer
@@ -207,7 +208,7 @@ flowchart LR
 
 - The connection is always opened by the agent; no inbound port is opened on the supervised machines (ADR-0004).
 - Revocation is strict: a missing, expired or unreachable revocation list is a failure, and the connection is refused (ADR-0021).
-- The verifier is enrolled with a token of kind "monitor"; its identity can call the health service of the Collector, nothing else (ADR-0025). It never connects to the database (ADR-0024).
+- The verifier is enrolled with a token of kind "monitor"; its identity can call the health service of the Collector, nothing else (ADR-0025). It never connects to the database (ADR-0024). That it renews its certificate and fetches the revocation lists follows from "enrolled like an agent" (ADR-0025); no ADR states it explicitly.
 - The verifier runs under a systemd timer, every hour (ADR-0024). It raises its own critical alerts, through its own configuration, when a copied file differs, when sequence numbers are missing, when the newest file is too old, or when the Backend does not answer (ADR-0022, ADR-0024).
 - Agent updates never go through the Collector nor through remote commands (ADR-0025).
 
@@ -239,7 +240,7 @@ flowchart LR
 - The audit rows are also exported right after each audited security event, not only every hour (ADR-0024).
 - The purge is refused, with an alert, when the exported counts differ, when the partition is too young, or when the verifier's receipts do not cover every sequence number of an audit partition (ADR-0022, ADR-0024). If the verifier stops, no audit partition can be purged.
 - The age of the last backup of each kind and the result of the last restore test are shown on the dashboard and alerted (ADR-0022).
-- Training and reports never run at the same time; training is scheduled at night (ADR-0010).
+- Training and reports never run at the same time; training is scheduled at night (ADR-0010). A report that cannot be generated while the LLM service is stopped is recorded as failed with the reason "LLM unavailable", never replaced by an older one, and must be requested again (ADR-0009, ADR-0010).
 
 ## Left out of this overview
 
@@ -255,11 +256,12 @@ Work that the system does on its own, as part of the use cases above, without a 
 
 These points wait for the product owner. The diagrams draw a choice only where it is marked "drawn as".
 
-1. **Rights of the roles.** They are written only in ADR-0014, superseded by ADR-0019, itself superseded by ADR-0023, which keeps the roles without restating their rights. No accepted ADR restates the table.
+1. **Rights of the roles.** ADR-0023 keeps every decision of ADR-0019 that it does not change, and ADR-0019 restates the rights of Operator and Admin; the right of the Reader ("sees everything, changes nothing") is written only in ADR-0014, which is superseded. No accepted ADR gathers the whole table.
 2. **Role for revoking a machine, deleting a host, and silencing an alert** from the web site. ADR-0023 puts these actions under step-up without naming the role. Drawn as Admin. "Delete a host" is not defined further by any ADR.
 3. **What triggers an AI report**: a schedule, a request, or both. ADR-0009 says that the API calls the LLM; ADR-0010 speaks of reports "requested", without saying by whom. Drawn as a scheduled job.
 4. **Who creates a "monitor" token**: the host channel, the web site, or both (ADR-0025 does not say).
 5. **Whether the other critical alerts of the catalogue** (ADR-0022), outside the list of ADR-0025, can be silenced from the web site.
 6. **Whether each user sets up their own second factor.** ADR-0023 says that an authenticator key is shown once when it is generated, and that an Admin can reset a second factor; that the user sets it up is implied.
-7. **Increment of the inventory and of the key backup.** The agent sends an inventory (ADR-0004, ADR-0016), shown on the machine page of 0.2; the key backup is described in ADR-0022. No ADR gives the increment of either.
+7. **Increment of the inventory, of the key backup and of the archive deletion procedure.** The agent sends an inventory (ADR-0004, ADR-0016), shown on the machine page of 0.2; the key backup is described in ADR-0022; the deletion of expired archive files in ADR-0024. No ADR gives the increment of any of them.
 8. **Frequency of the training** (ADR-0010 says "at night", not how often).
+9. **Who carries out the re-key of the Agent CA.** ADR-0021 describes it (a signed agent update first, then the Enrolment service switches to the new CA) without naming the actor. Drawn as the key holder, who signs the package.
