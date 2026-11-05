@@ -33,9 +33,9 @@ Dashboard supervises a small fleet of Linux and Windows servers: heartbeats, inv
 ### Branches
 
 - `main` holds published versions. `dev` (created from `main`) receives finished versions before they reach `main`. `release/X.Y.Z` (from `dev`) holds the work of one version.
-- `feature/…`, `fix/…`, `docs/…`, `chore/…`, `test/…` start from `release/X.Y.Z`. `hotfix/…` starts from `main`, then is carried into `dev` and the current version.
+- `feature/…`, `fix/…`, `docs/…`, `chore/…`, `test/…` start from `release/X.Y.Z` (or from the previous branch of a chain, see "Chains of pull requests"). `hotfix/…` starts from `main`, then is carried into `dev` and the current version.
 - Changes go up feature → release → dev → main, **always through a pull request**.
-- Annotated tag `vX.Y.Z` on `main`, and a **GitHub pre-release for every 0.x.0 version** ("vX.Y.Z - <title>"), created by Claude after the product owner has merged the version into `main`, and announced when it is created.
+- Annotated tag `vX.Y.Z` on `main`, and a **GitHub pre-release for every 0.x.0 version** ("vX.Y.Z - <title>"), created by Claude after the product owner has merged the version into `main`, and announced when it is created. A pre-release created by Claude carries no agent package: the signed packages are built and published by the product owner, who holds the signing keys (ADR-0025).
 - Branch names are lowercase English words with hyphens.
 
 ### Commits and pull requests
@@ -45,13 +45,18 @@ Dashboard supervises a small fleet of Linux and Windows servers: heartbeats, inv
 - Keep the attribution lines (`Co-Authored-By`, "Generated with Claude Code").
 - **Merge commits only**: never squash, never rebase. **No history rewriting** on a shared branch. Merged branches are deleted by Claude, locally and on GitHub.
 - SemVer; before 1.0.0: `0.x.y`, with `-alpha.N` / `-beta.N`.
-- GitHub rulesets (to be set up by the product owner): pull request required, required checks, merge commit only, no force push and no deletion on `main` and `dev`, no bypass.
+- GitHub rulesets (to be set up by the product owner), on `main`, `dev` and `release/**`: pull request required, required checks, **branch up to date before merging** (the checks run against the current base), merge commit only, no force push, no deletion, no bypass. Tags `v*` can be neither updated nor deleted. The exact ruleset options are **not verified** against the GitHub documentation yet.
 
 ### Who does what
 
-- **The product owner reviews and merges every pull request** into `main`, `dev` and `release/X.Y.Z`, with a merge commit. Claude never merges.
-- **Claude manages the rest of Git**: creating branches, pushing, opening pull requests, deleting merged branches, keeping the local copy up to date, the annotated tag and the GitHub pre-release.
-- Agents never merge and never push.
+- **The product owner reviews and merges every pull request** into `main`, `dev` and `release/X.Y.Z`, with a merge commit. Claude never merges. This replaces, on this project, any merge delegation granted in the product owner's user-level instructions.
+- **Claude manages the rest of Git**: creating branches, pushing, opening pull requests, deleting merged branches, pulling the merged changes into the local copy, the annotated tag and the GitHub pre-release.
+- Agents other than Claude never merge and never push.
+
+### Where a decision is recorded
+
+- An architecture decision (a structure, a protocol, a data flow, a security mechanism) is recorded in an ADR.
+- Other decisions are recorded in the description of the pull request, and in `doc/analyse/dependencies.md` for a library.
 
 ### When a pull request is ready for the product owner
 
@@ -60,13 +65,14 @@ Claude hands a pull request to the product owner only when:
 1. the CI is green, without bypass, and covers every tier the pull request touches (a pull request that touches SQL needs the SQL job); Claude checks the status of the checks once before handing it over;
 2. **every agent that applies** to the pull request (table in section 5) has reviewed it, every finding is fixed or justified in the pull request, and the agents not run are listed with the reason.
 
-No CI exists yet (no project to build): until it does, a pull request says so instead of condition 1.
+No CI exists yet (no project to build). Until it does, a pull request states that no CI exists, in place of condition 1, and a code pull request pastes the local results instead: the build and test commands, and the counts of tests run, passed and skipped (none skipped). The CI is the first code work of the project.
 
 ### [SEC] pull requests
 
 - A pull request is **[SEC]** if it touches a subject of an ADR classified security-sensitive (enrolment, certificate authorities and revocation lists, authentication, sessions and second factor, the audit trail and its keys, remote commands, signed agent updates, protected alerts), or one of these subjects even where its ADR is not classified: pseudonymisation, SQL permissions, cryptography, secrets. When in doubt, it is [SEC].
 - [SEC] is written in the title of the pull request. Ackbar and Cassian always review it. Ackbar may classify a pull request as [SEC]; Claude never removes the classification.
-- Safeguards: `.github/`, rulesets, `.editorconfig`, analyser rules, `CLAUDE.md`, `.gitignore`, `.gitattributes`, CI and release scripts. A pull request that changes one says so in its description.
+- A pull request that contains a [SEC] commit not yet merged, for instance through a chain, is itself [SEC], and its description says which commits are its own.
+- Safeguards: `.github/`, rulesets, `.editorconfig`, analyser rules, `CLAUDE.md`, `.gitignore`, `.gitattributes`, CI and release scripts. A pull request that changes one is not [SEC] for that reason alone, but says so in its description, so that the product owner reads it with extra care.
 
 ### Public repository
 
@@ -76,18 +82,20 @@ No CI exists yet (no project to build): until it does, a pull request says so in
 
 ### No overlapping pull requests
 
-- Among the agents, only Claude opens pull requests. **Two open pull requests never touch the same file**, the product owner's included.
+- Among the agents, only Claude opens pull requests. **Two open pull requests never touch the same file** (except inside a chain), the product owner's included.
 - Before each `gh pr create`: compare `git diff --name-only origin/release/X.Y.Z...HEAD` with the files of the open pull requests (`gh pr view <n> --json files`). If a file is shared, wait for the other one to be merged.
 - Files at risk (once they exist): `CHANGELOG.md`, test READMEs, solution files, the central package versions file, the roadmap, `CONTRIBUTING.md`.
+
 ### Chains of pull requests
 
 When Claude opens several pull requests while the product owner is away, they form a **chain**, so that he can review and merge them one after the other:
 
 - each branch starts from the previous one, and every pull request targets `release/X.Y.Z`;
 - each pull request states its place in the chain ("2 of 3, after #12"), and the closing report gives the order in which to review and merge;
+- **a chain is merged in order only**: every pull request after the first stays a draft until the previous one is merged;
 - once the previous one is merged, the diff of the next one shrinks to its own commits;
-- merging one pull request must re-run the checks of the next one, so that he never merges on checks run against an old base. How the CI achieves this is decided when the CI is written (**not verified**: GitHub may not re-run the checks of a pull request when only its base branch changes); until then, Claude updates the next branch with `release/X.Y.Z` and pushes it.
-- The rule above on overlapping files does not apply inside one chain, since each branch contains the previous one.
+- merging one pull request must re-run the checks of the next one, so that he never merges on checks run against an old base. The ruleset "branch up to date before merging" enforces it; how the CI re-runs the checks is decided when the CI is written (**not verified**: GitHub may not re-run the checks of a pull request when only its base branch changes). Until then, Claude merges `release/X.Y.Z` into the next branch (never a rebase) and pushes it;
+- if that update has a conflict, Claude does not resolve it alone: it says so in the pull request, and the agents concerned review the resolution before the product owner merges.
 
 ### Changelog
 
@@ -145,7 +153,7 @@ Required for **every** pull request, documentation only included. The agents rev
 
 - Work from a clear brief, with as few round trips as possible.
 - **Never decide alone** (section 1): when a choice comes up, keep what exists, bound the risk, and ask.
-- The closing report is short: the order in which to review and merge the pull requests, what is done, what is **proven**, what is **not verified**, what **waits for his decision**.
+- The closing report is short: the order in which to review and merge the pull requests, what is done, what is **proven**, what is **not verified**, what **waits for his decision**, and any clean-up blocked by the permission checks (section 10).
 
 ## 7. C# code style
 
@@ -221,7 +229,7 @@ Observed on an earlier project; the ones checked against Microsoft Learn say so.
 - Claude's tools write **LF**; the working tree uses CRLF (`.gitattributes`), except files read on Linux (`*.sh`, `*.service`, `*.socket`). Once an `.editorconfig` exists, run `dotnet format --verify-no-changes` before each pull request.
 - **IDE1006** (naming) is not enforced by the build **by default**: command-line builds skip code-style rules unless `EnforceCodeStyleInBuild` is set and `dotnet_diagnostic.IDE1006.severity` is given in `.editorconfig` (Microsoft Learn, *Code-style naming rules*). Until then, check it with `dotnet format --verify-no-changes`.
 - xUnit v3 supports **Microsoft.Testing.Platform**: with the .NET 10 SDK, `"test": {"runner": "Microsoft.Testing.Platform"}` in `global.json` switches `dotnet test` to that mode (Microsoft.Testing.Platform 1.7 or later), then `dotnet test --solution X` or `--project X` (Microsoft Learn, *dotnet test*).
-- The shell blocks `Remove-Item` and some deletions (`git worktree remove`, `git branch -D`): leave them to the product owner.
+- The permission checks of Claude Code may block deletions (`Remove-Item`, `git worktree remove`, `git branch -D`, deleting a remote branch). Claude deletes merged branches with `git branch -d` (which refuses an unmerged branch) and `git push origin --delete`. When a command is blocked, Claude never works around it: it tells the product owner which permission rule would allow it, and lists the pending clean-up in the closing report.
 - Never change directory in a command (`cd`, `Set-Location`): use absolute paths or `-WorkingDirectory`.
 - **Heredocs** containing quotes break the Bash tool: write edit scripts to a scratch file.
 - **Agent worktrees start from `main`** (the default branch): the brief must impose the base `release/X.Y.Z`.
