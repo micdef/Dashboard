@@ -19,7 +19,7 @@ This ADR keeps the remote commands of ADR-0013 unchanged and replaces its audit 
 
 ### Kept from ADR-0013: remote commands
 
-- **No SSH.** The agent opens a bidirectional gRPC stream to the Collector over mTLS (ADR-0004, ADR-0017); commands arrive on this stream. No inbound port is opened on the machines.
+- **No SSH.** The agent opens a bidirectional gRPC stream to the Collector over mTLS (ADR-0004, ADR-0021); commands arrive on this stream. No inbound port is opened on the machines.
 - Commands are **typed messages from a catalogue**, never free text. Each machine has a **local allowlist** that only root (or an administrator on Windows) can modify; typed parameters are matched exactly against it.
 - The roles allowed to issue commands, and the step-up required before issuing one, are decided in ADR-0019.
 - **At most once**: each command carries a unique identifier and an expiry timestamp; the expiry is checked by the Collector and by the agent; the agent keeps the seen identifiers on disk until their expiry; the heartbeat reports the clock offset, and the agent refuses commands when its offset exceeds a configured tolerance.
@@ -28,7 +28,7 @@ This ADR keeps the remote commands of ADR-0013 unchanged and replaces its audit 
 
 ### What is audited, and fail-closed
 
-- Every step of a command is audited: request, delivery, and outcome (executed, refused, timed out, expired, result lost), with the requesting user and the role used. So are account changes, role changes, changes of security settings (ADR-0019), machine enrolments and revocations (ADR-0017), and the creation of the first Admin.
+- Every step of a command is audited: request, delivery, and outcome (executed, refused, timed out, expired, result lost), with the requesting user and the role used. So are account changes, role changes, changes of security settings (ADR-0019), machine enrolments and revocations (ADR-0021), and the creation of the first Admin.
 - **Fail-closed**: an action takes place only if its audit row is written. The audit row and the action are written in the same transaction, or the audit row is written first; if it cannot be written, the action is refused. A command is never delivered without its audit row.
 - Command output is not stored in the audit trail: the audit row keeps its hash, and the output is stored in a regular table, purged like the logs (ADR-0012).
 
@@ -36,7 +36,7 @@ This ADR keeps the remote commands of ADR-0013 unchanged and replaces its audit 
 
 - The audit trail is a regular table, **partitioned by month**, on which the application account can only insert, through a stored procedure (ADR-0003).
 - Each row stores an **HMAC-SHA256** computed over its own content (in a canonical byte format, fixed at coding time) and the HMAC of the previous row.
-- The **HMAC key is never in the database**. It is a file on the "app" VM, readable only by the Backend processes that write audit rows; it is backed up offline by the product owner, like the Server CA key (ADR-0017). A database administrator alone cannot change, remove or insert a row without breaking the chain.
+- The **HMAC key is never in the database**. It is a file on the "app" VM, readable only by the Backend processes that write audit rows; it is backed up offline by the product owner, like the Server CA key (ADR-0021). A database administrator alone cannot change, remove or insert a row without breaking the chain.
 - The insert procedure accepts a row only if the previous HMAC it carries is the current head of the chain, under a lock: one chain, no gap.
 
 ### Hourly export to a write-once archive
@@ -97,4 +97,4 @@ This ADR keeps the remote commands of ADR-0013 unchanged and replaces its audit 
 - Microsoft Learn, *Owner of a New Object* (owner's implicit rights), cited by the second reading; not re-read by the main developer.
 - GDPR, article 5(1)(e) (storage limitation).
 - [Second reading report](../reviews/2026-11-04-second-reading.md), finding B2.
-- ADR-0003, ADR-0004, ADR-0012, ADR-0013 (superseded), ADR-0015, ADR-0017, ADR-0018, ADR-0019.
+- ADR-0003, ADR-0004, ADR-0012, ADR-0013 (superseded), ADR-0015, ADR-0021, ADR-0018, ADR-0019.

@@ -22,12 +22,12 @@ The system has the following links:
 
 Supervised machines must not expose any inbound port for the system.
 
-ADR-0017 later adds two links that follow the rules of this ADR: agent → Enrolment service (enrolment and renewal, opened by the agent) and Enrolment service → API (a Unix domain socket reserved for it). See also ADR-0016.
+ADR-0021 later adds two links that follow the rules of this ADR: agent → Enrolment service (enrolment and renewal, opened by the agent) and Enrolment service → API (a Unix domain socket reserved for it). See also ADR-0016.
 
 ## Decision
 
 - **gRPC on every link between Dashboard components**, including between the web site and the Backend. Two links use third-party protocols and are exceptions: the LLM server's own HTTP API (Backend → AI node) and the NAS file protocol (decided in ADR-0012).
-- **Agent to Collector**: gRPC over HTTP/2 with mutual TLS (mTLS, ADR-0017). The connection is **always opened by the agent**; no inbound port is opened on the supervised machines. Commands travel on a bidirectional stream opened by the agent.
+- **Agent to Collector**: gRPC over HTTP/2 with mutual TLS (mTLS, ADR-0021). The connection is **always opened by the agent**; no inbound port is opened on the supervised machines. Commands travel on a bidirectional stream opened by the agent.
 - **Links inside the "app" VM**: gRPC over **Unix domain sockets**, protected by file permissions. Kestrel does not set these permissions: they come from the operating system (systemd `RuntimeDirectory=` with a restrictive mode, `UMask=`, group ownership). A stale socket file from a previous run is removed at start.
 - **Strict hierarchy: the web site talks only to the Backend (its API process), and only the Backend talks to the data gateway.** Account operations (ASP.NET Core Identity stores) go through an API service, which relays them to the data gateway. The Backend is the single tier where callers are authenticated and authorised before any data access.
 - The data gateway exposes **two sockets**, owned by different groups: `ingest` (used by the Collector) and `manage` (used by the API). Since the Backend runs as two processes under different users (ADR-0005), each process can only open its own socket.
@@ -68,4 +68,4 @@ ADR-0017 later adds two links that follow the rules of this ADR: agent → Enrol
 
 - Microsoft Learn, *Inter-process communication with gRPC* and *Inter-process communication with gRPC and Unix domain sockets* (consulted 2026-11-03).
 - Microsoft Learn, *Security considerations for Kestrel* (Unix socket permissions, consulted by the security review, 2026-11-03).
-- ADR-0003, ADR-0005, ADR-0006, ADR-0009, ADR-0012, ADR-0020, ADR-0019, ADR-0016, ADR-0017.
+- ADR-0003, ADR-0005, ADR-0006, ADR-0009, ADR-0012, ADR-0020, ADR-0019, ADR-0016, ADR-0021.

@@ -25,7 +25,7 @@ In the OpenTelemetry Protocol (OTLP), the export requests carry only the telemet
 
 ### Identity
 
-- The machine identity comes from the client certificate (ADR-0017), not from the OTLP resource attributes. If the attributes contradict the certificate-derived machine, the mismatch is logged and shown, and **the certificate always wins**.
+- The machine identity comes from the client certificate (ADR-0021), not from the OTLP resource attributes. If the attributes contradict the certificate-derived machine, the mismatch is logged and shown, and **the certificate always wins**.
 
 ### Duplicates
 
@@ -49,7 +49,7 @@ In the OpenTelemetry Protocol (OTLP), the export requests carry only the telemet
 ### Positive
 
 - Documented, widely used data models instead of in-house ones.
-- A standard OpenTelemetry exporter could later send logs or metrics to the Collector, given a certificate from the Agent CA (ADR-0017).
+- A standard OpenTelemetry exporter could later send logs or metrics to the Collector, given a certificate from the Agent CA (ADR-0021).
 - Retries never create duplicates, and a broken batch never blocks the others.
 
 ### Negative
@@ -62,4 +62,4 @@ In the OpenTelemetry Protocol (OTLP), the export requests carry only the telemet
 ## References
 
 - OpenTelemetry, `opentelemetry-proto`: `opentelemetry/proto/collector/logs/v1/logs_service.proto` and `opentelemetry/proto/collector/metrics/v1/metrics_service.proto` (consulted 2026-11-04).
-- ADR-0004, ADR-0012, ADR-0015, ADR-0017.
+- ADR-0004, ADR-0012, ADR-0015, ADR-0021.

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Accepted |
+| Status | Superseded by [ADR-0021](0021-machine-identity-from-the-first-increment.md) |
 | Date | 2026-11-04 |
 | Decider | Michaël Defraene (product owner, architect) |
 | Drafted by | Claude (main developer), after a review by the architecture, security and CVE review agents |
