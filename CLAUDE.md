@@ -184,7 +184,7 @@ Same standard as C#: production code, not notebooks. Python only **trains** the 
 - Always the project's **venv**, never the system Python. Dependencies declared in `pyproject.toml`, **pinned by a lock file**, audited by Cassian.
 - Python version fixed (`requires-python`), the same locally and in CI.
 - Layout `src/<package>/` + `tests/`, separate from `notebooks/` (exploration only, never imported).
-- Raw data, models and outputs are **never versioned** (see `.gitignore`); only their **description** is versioned (source, version, hash).
+- Raw data, models and outputs live in `/data/` and `/models/` at the repository root and are **never versioned**; `.gitignore` also excludes data, model and experiment files wherever they are. Only their **description** is versioned (source, version, hash). The small datasets used by the tests are synthetic, never real logs, and live in `test/**/fixtures/`.
 
 ### Code quality
 
@@ -219,14 +219,14 @@ Same standard as C#: production code, not notebooks. Python only **trains** the 
 ## 9. Operations
 
 - Target hosts run **Fedora or Windows** only: `dnf`, SELinux, firewalld. Scheduled tasks on Linux are **systemd timers**, never cron.
-- **Everything is set in the configuration file**, nothing hard-coded in a script or a service (endpoints, paths, delays, retries). If a value changes, the configuration changes, never the code.
+- **Everything is set in the configuration file**, nothing hard-coded in a script or a service (endpoints, paths, delays, retries). If a value changes, the configuration changes, never the code. The repository holds only `*.conf.example` files, without any secret; the real `*.conf` files stay on the hosts (`.gitignore`).
 - Changes on the product owner's servers and firewall are applied by him: Claude prepares the files and the commands, he runs them and returns the output.
 
 ## 10. Tooling pitfalls observed (Windows)
 
 Observed on an earlier project; the ones checked against Microsoft Learn say so.
 
-- Claude's tools write **LF**; the working tree uses CRLF (`.gitattributes`), except files read on Linux (`*.sh`, `*.service`, `*.socket`). Once an `.editorconfig` exists, run `dotnet format --verify-no-changes` before each pull request.
+- Claude's tools write **LF**; the working tree uses CRLF (`.gitattributes`), except files read on Linux (`*.sh`, `*.service`, `*.socket`, `*.timer`, `*.conf`, `*.conf.example`). Once an `.editorconfig` exists, run `dotnet format --verify-no-changes` before each pull request.
 - **IDE1006** (naming) is not enforced by the build **by default**: command-line builds skip code-style rules unless `EnforceCodeStyleInBuild` is set and `dotnet_diagnostic.IDE1006.severity` is given in `.editorconfig` (Microsoft Learn, *Code-style naming rules*). Until then, check it with `dotnet format --verify-no-changes`.
 - xUnit v3 supports **Microsoft.Testing.Platform**: with the .NET 10 SDK, `"test": {"runner": "Microsoft.Testing.Platform"}` in `global.json` switches `dotnet test` to that mode (Microsoft.Testing.Platform 1.7 or later), then `dotnet test --solution X` or `--project X` (Microsoft Learn, *dotnet test*).
 - The permission checks of Claude Code may block deletions (`Remove-Item`, `git worktree remove`, `git branch -D`, deleting a remote branch). Claude deletes merged branches with `git branch -d` (which refuses an unmerged branch) and `git push origin --delete`. When a command is blocked, Claude never works around it: it tells the product owner which permission rule would allow it, and lists the pending clean-up in the closing report.

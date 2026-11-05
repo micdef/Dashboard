@@ -18,13 +18,46 @@ __pycache__/
 .ruff_cache/
 
 # Data, models and outputs are never versioned (only their description is).
-# Anchored to the repository root: an unanchored "data/" or "models/" would
-# also ignore C# source folders such as src/<Project>/Models/ (Git ignores
-# case on Windows).
+# They live only in /data/ and /models/ at the repository root. The folders are
+# anchored there: an unanchored "data/" or "models/" would also ignore C# source
+# folders such as src/<Project>/Models/, because Git matches names without
+# regard to case where core.ignorecase is true (the default on Windows).
 /data/
 /models/
-*.onnx
+
+# Data, model and experiment files are also ignored wherever they are, in case
+# one is saved outside those folders: raw logs hold personal data (ADR-0012).
+*.csv
+*.jsonl
+*.ndjson
+*.log
 *.parquet
+*.npy
+*.npz
+*.pkl
+*.joblib
+*.pt
+*.pth
+*.safetensors
+*.h5
+*.onnx
+mlruns/
+outputs/
+
+# Small synthetic datasets used by the tests, never real logs.
+!test/**/fixtures/**
+
+# Keys and secrets are never versioned.
+*.pfx
+*.p12
+*.key
+*.pem
+*.snk
+.env
+
+# Real configuration files hold secrets: only the *.conf.example files, without
+# any secret, are versioned.
+*.conf
 
 # Generated developer documentation
 doc/dev/generated/
