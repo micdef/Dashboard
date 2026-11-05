@@ -25,7 +25,7 @@ The first draft of this ADR proposed one process with two endpoints. The product
 - Both processes use the same domain core, the Fleet core (ADR-0006).
 - Responsibilities:
   - Collector: agent authentication (ADR-0017), ingestion of logs, heartbeats and inventory, host state, real-time rules, the agent command streams and the delivery of commands.
-  - API: every service the web site uses, including the relay of account operations (ADR-0014), user authorisation per role, and the creation of commands.
+  - API: every service the web site uses, including the relay of account operations (ADR-0019), user authorisation per role, and the creation of commands.
   - Where ONNX scoring and LLM calls run is decided with the AI pipeline (ADR-0009).
 - **Commands**: the database (through the data gateway) stays the **source of truth**.
   1. The API records the command through the data gateway.
@@ -55,4 +55,4 @@ The first draft of this ADR proposed one process with two endpoints. The product
 
 ## References
 
-- ADR-0004, ADR-0006, ADR-0009, ADR-0013, ADR-0014, ADR-0017.
+- ADR-0004, ADR-0006, ADR-0009, ADR-0013, ADR-0019, ADR-0017.

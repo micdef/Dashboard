@@ -14,7 +14,7 @@ The system has the following links:
 | Link | Network | Purpose |
 |---|---|---|
 | agent → Collector | across the network | logs, heartbeats, inventory; commands in both directions (ADR-0013) |
-| web site → API | inside the "app" VM | everything the user interface shows or requests, including the account operations of ASP.NET Core Identity (ADR-0014) |
+| web site → API | inside the "app" VM | everything the user interface shows or requests, including the account operations of ASP.NET Core Identity (ADR-0019) |
 | API → Collector | inside the "app" VM | notification of a new command, identifier only (ADR-0005) |
 | Collector → data gateway (`ingest`), API → data gateway (`manage`) | inside the "app" VM | all data access (ADR-0003) |
 | Backend → AI node | across the network | LLM report generation (ADR-0009) |
@@ -57,7 +57,7 @@ ADR-0017 later adds two links that follow the rules of this ADR: agent → Enrol
 
 ### Negative
 
-- The API trusts the web site for the identity and the role of the user who makes a request (see ADR-0014): a compromised web site process could act as any user.
+- The API trusts the web site for the identity and the role of the user who makes a request (see ADR-0019): a compromised web site process could act as any user.
 - The API relays account records, password hashes included, between the web site and the data gateway; they must never be logged.
 - A gRPC channel configured for Unix domain sockets (through `SocketsHttpHandler.ConnectCallback`) supports neither client-side load balancing nor connectivity state tracking. Neither is needed on a single VM.
 - Browsers cannot call gRPC services directly (without gRPC-Web); this is not a problem with Blazor Interactive Server, whose calls to the Backend run on the server.
@@ -68,4 +68,4 @@ ADR-0017 later adds two links that follow the rules of this ADR: agent → Enrol
 
 - Microsoft Learn, *Inter-process communication with gRPC* and *Inter-process communication with gRPC and Unix domain sockets* (consulted 2026-11-03).
 - Microsoft Learn, *Security considerations for Kestrel* (Unix socket permissions, consulted by the security review, 2026-11-03).
-- ADR-0003, ADR-0005, ADR-0006, ADR-0009, ADR-0012, ADR-0013, ADR-0014, ADR-0016, ADR-0017.
+- ADR-0003, ADR-0005, ADR-0006, ADR-0009, ADR-0012, ADR-0013, ADR-0019, ADR-0016, ADR-0017.
