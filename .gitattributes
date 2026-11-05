@@ -6,6 +6,9 @@
 *.sh        text eol=lf
 *.service   text eol=lf
 *.socket    text eol=lf
+*.timer     text eol=lf
+*.conf      text eol=lf
+*.conf.example text eol=lf
 
 # Language-aware diffs
 *.cs        diff=csharp

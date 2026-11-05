@@ -17,11 +17,88 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Data, models and outputs are never versioned (only their description is)
-data/
-models/
-*.onnx
+# Data, models and outputs are never versioned (only their description is).
+# They live only in /data/ and /models/ at the repository root. The folders are
+# anchored there: an unanchored "data/" or "models/" would also ignore C# source
+# folders such as src/<Project>/Models/, because Git matches names without
+# regard to case where core.ignorecase is true (the default on Windows).
+/data/
+/models/
+
+# Data, model and experiment files are also ignored wherever they are, in case
+# one is saved outside those folders: raw logs hold personal data (ADR-0012).
+*.csv
+*.csv.*
+*.jsonl
+*.jsonl.*
+*.ndjson
+*.log
+*.log.*
+*.evtx
 *.parquet
+*.npy
+*.npz
+*.pkl
+*.joblib
+*.pt
+*.pth
+*.safetensors
+*.h5
+*.onnx
+
+# Database backups and files hold data too.
+*.bak
+*.bacpac
+*.mdf
+*.ldf
+*.db
+*.sqlite
+
+# Experiment tracking folders, wherever training is run from (no C# folder
+# uses these names).
+mlruns/
+wandb/
+lightning_logs/
+.ipynb_checkpoints/
+
+# Training outputs, at the root only (same reason as /data/: an unanchored
+# "outputs/" would also ignore a C# folder named Outputs/).
+/outputs/
+
+# Small synthetic datasets used by the tests, never real logs. This exception
+# comes before the key and configuration rules on purpose: keys and
+# certificates are never versioned, not even for tests (the tests generate
+# throwaway ones when they start), and a test configuration is a *.conf.example.
+!test/**/fixtures/**
+!tests/**/fixtures/**
+
+# Keys, certificates and secrets are never versioned. Local development secrets
+# (for instance the audit and pseudonymisation keys) go in /secrets/ or carry
+# the .secret extension.
+/secrets/
+*.secret
+*.pfx
+*.p12
+*.key
+*.pem
+*.snk
+*.gpg
+*.asc
+*.ppk
+*.kdbx
+*.jks
+id_rsa*
+id_ecdsa*
+id_ed25519*
+.env
+.env.*
+!.env.example
+secrets.json
+appsettings.*.local.json
+
+# Real configuration files hold secrets: only the *.conf.example files, without
+# any secret, are versioned.
+*.conf
 
 # Generated developer documentation
 doc/dev/generated/
