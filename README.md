@@ -17,13 +17,13 @@ Dashboard is the final project of the AI developer training at Technofutur TIC (
 ### Features (V1 target)
 
 - **Fleet status**: heartbeats and host state for every supervised machine.
-- **Machine page**: operating system, packages, pending updates, CVE exposure, state, and the logs of that machine.
+- **Machine page**: operating system, packages, pending updates, CVE exposure, state, load (processor, memory, disks), and the logs of that machine.
 - **Logs**: journald, Nginx files, Windows Event Log, and custom formats described by an XML parser definition.
 - **AI**:
   - deterministic rules for known attacks;
-  - an anomaly model trained in Python (scikit-learn) and run in .NET through ONNX Runtime;
+  - an anomaly model, fed with log templates and metrics, trained in Python (scikit-learn) and run in .NET through ONNX Runtime;
   - a local LLM that writes reports from computed facts, never from raw logs.
-- **Remote commands**: a fixed catalogue of typed commands, checked against a local allowlist on each machine, with an immutable audit trail. No SSH, no inbound port on the machines.
+- **Remote commands**: a fixed catalogue of typed commands, checked against a local allowlist on each machine, with a tamper-evident audit trail. No SSH, no inbound port on the machines.
 - **Accounts and roles** for the web interface.
 
 ### Architecture
@@ -33,9 +33,12 @@ Dashboard is the final project of the AI developer training at Technofutur TIC (
 | Agent (.NET Worker Service) | runs on each machine; opens the connection itself (gRPC, mutual TLS) |
 | Collector | receives agent data, computes host state, applies rules, delivers commands |
 | API | serves the web interface, authorises users, creates commands |
+| Enrolment service | private certificate authority for the agents: enrolment, renewal, revocation |
+| Revocation list service | serves the signed revocation lists to the agents, independently of the Enrolment service |
 | Data gateway | the only process with database access (stored procedures, TVPs, views) |
 | Web site (Blazor Web App) | the user interface |
 | AI node | Python training and the local LLM; no database access |
+| Audit verifier | runs on another machine; keeps its own copy of the audit trail, checks it every hour and watches the Backend |
 | SQL Server | system of record |
 
 Every decision, with its context, alternatives and consequences, is recorded in the [Architecture Decision Records](doc/analyse/adr/README.md).
@@ -50,8 +53,8 @@ The database code uses only features available in SQL Server **Standard** editio
 
 The project is in its **design phase**: the architecture decisions are being finalised, and no code has been written yet. Planned increments:
 
-1. Heartbeat end to end
-2. Linux logs and the machine page
+1. Heartbeat end to end, with agent enrolment
+2. Linux logs and metrics, the machine page, accounts and the audit trail
 3. AI: data preparation, training, ONNX inference, LLM report
 4. Windows agent and XML log parser
 5. Rules and CVE
@@ -89,13 +92,13 @@ Dashboard est le projet de fin de la formation Développeur IA de Technofutur TI
 ### Fonctionnalités (cible de la V1)
 
 - **État du parc** : heartbeats et état de chaque machine supervisée.
-- **Fiche par machine** : système d'exploitation, paquets, mises à jour en attente, exposition aux CVE, état, et les logs de la machine.
+- **Fiche par machine** : système d'exploitation, paquets, mises à jour en attente, exposition aux CVE, état, charge (processeur, mémoire, disques), et les logs de la machine.
 - **Logs** : journald, fichiers Nginx, journal d'événements Windows, et formats propres décrits par une définition de parser XML.
 - **IA** :
   - des règles déterministes pour les attaques connues ;
-  - un modèle d'anomalies entraîné en Python (scikit-learn) et exécuté en .NET avec ONNX Runtime ;
+  - un modèle d'anomalies, alimenté par les templates de logs et les métriques, entraîné en Python (scikit-learn) et exécuté en .NET avec ONNX Runtime ;
   - un LLM local qui rédige des rapports à partir de faits calculés, jamais à partir des logs bruts.
-- **Commandes à distance** : un catalogue fixe de commandes typées, vérifiées par une liste blanche locale sur chaque machine, avec un audit immuable. Pas de SSH, aucun port entrant sur les machines.
+- **Commandes à distance** : un catalogue fixe de commandes typées, vérifiées par une liste blanche locale sur chaque machine, avec un audit dont toute altération est détectée. Pas de SSH, aucun port entrant sur les machines.
 - **Comptes et rôles** pour l'interface web.
 
 ### Architecture
@@ -105,9 +108,12 @@ Dashboard est le projet de fin de la formation Développeur IA de Technofutur TI
 | Agent (Worker Service .NET) | tourne sur chaque machine ; ouvre lui-même la connexion (gRPC, TLS mutuel) |
 | Collector | reçoit les données des agents, calcule l'état des machines, applique les règles, délivre les commandes |
 | API | sert l'interface web, autorise les utilisateurs, crée les commandes |
+| Service d'enrôlement | autorité de certification privée des agents : enrôlement, renouvellement, révocation |
+| Service des listes de révocation | sert aux agents les listes de révocation signées, indépendamment du service d'enrôlement |
 | Passerelle de données (very-back-end) | seul processus qui accède à la base (procédures stockées, TVP, vues) |
 | Site web (Blazor Web App) | l'interface utilisateur |
 | Nœud IA | entraînement Python et LLM local ; aucun accès à la base |
+| Vérificateur d'audit | tourne sur une autre machine ; garde sa propre copie de l'audit, la vérifie toutes les heures et surveille le Backend |
 | SQL Server | stockage de référence |
 
 Chaque décision, avec son contexte, ses alternatives et ses conséquences, est consignée (en anglais) dans les [Architecture Decision Records](doc/analyse/adr/README.md).
@@ -122,8 +128,8 @@ Le code de la base n'utilise que des fonctions disponibles dans l'édition **Sta
 
 Le projet est en **phase de conception** : les décisions d'architecture sont en cours de finalisation, et aucun code n'est encore écrit. Incréments prévus :
 
-1. Heartbeat de bout en bout
-2. Logs Linux et fiche par machine
+1. Heartbeat de bout en bout, avec l'enrôlement des agents
+2. Logs et métriques Linux, fiche par machine, comptes et audit
 3. IA : préparation des données, entraînement, inférence ONNX, rapport du LLM
 4. Agent Windows et parser XML
 5. Règles et CVE
