@@ -33,9 +33,9 @@ Dashboard supervises a small fleet of Linux and Windows servers: heartbeats, inv
 ### Branches
 
 - `main` holds published versions. `dev` (created from `main`) receives finished versions before they reach `main`. `release/X.Y.Z` (from `dev`) holds the work of one version.
-- `feature/…`, `fix/…`, `docs/…`, `chore/…`, `test/…` start from `release/X.Y.Z` (or from the previous branch of a chain, see "Chains of pull requests"). `hotfix/…` starts from `main`, then is carried into `dev` and the current version.
+- `feature/…`, `fix/…`, `docs/…`, `chore/…`, `test/…` start from `release/X.Y.Z` (or from the previous branch of a chain, see "Chains of pull requests"). `hotfix/…` starts from `main`, then is carried into `dev` and into the current `release/X.Y.Z` if one exists.
 - Changes go up feature → release → dev → main, **always through a pull request**.
-- Annotated tag `vX.Y.Z` on `main`, and a **GitHub pre-release for every 0.x.0 version** ("vX.Y.Z - <title>"), created by Claude after the product owner has merged the version into `main`, and announced when it is created. Once the tag and the pre-release (or the release) exist, Claude deletes `release/X.Y.Z`: only `main` and `dev` remain. A pre-release created by Claude carries no agent package: the packages are signed by the product owner, who holds the signing keys (ADR-0025).
+- Annotated tag `vX.Y.Z` on `main`, and a **GitHub pre-release for every 0.x.0 version** ("vX.Y.Z - <title>"), created by Claude after the product owner has merged the version into `main`, and announced when it is created. Once the tag and the pre-release (or the release) exist, Claude deletes `release/X.Y.Z`, after checking that it is merged into both `main` and `dev` (`git branch -r --merged origin/main` and `--merged origin/dev` list it): only `main` and `dev` remain. A branch with an open pull request is never deleted. A pre-release created by Claude carries no agent package: the packages are signed by the product owner, who holds the signing keys (ADR-0025).
 - Branch names are lowercase English words with hyphens.
 
 ### Commits and pull requests
