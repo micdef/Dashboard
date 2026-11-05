@@ -11,14 +11,14 @@
 
 V1 must be a complete, working system with integrated AI, presented to the training jury in March 2027. The work is delivered in small visible increments. If time runs short, something must be dropped, and the choice must be made in advance.
 
-The AI model is trained on data collected by the system itself (ADR-0009), so collection must start early. Machine identity (ADR-0017) is needed by the first heartbeat, and accounts and the audit trail (ADR-0013, ADR-0019) are needed as soon as the web site shows sensitive data.
+The AI model is trained on data collected by the system itself (ADR-0009), so collection must start early. Machine identity (ADR-0017) is needed by the first heartbeat, and accounts and the audit trail (ADR-0020, ADR-0019) are needed as soon as the web site shows sensitive data.
 
 ## Decision
 
 | Increment | Content |
 |---|---|
 | 0.1 | Heartbeat end to end: database, VBE, Backend, Linux agent, **Enrolment service** (two certificate authorities, token and CSR, renewal, revocation lists; ADR-0017), status page |
-| 0.2 | Linux logs, Linux metrics (processor, memory, disks; ADR-0008), hot storage with its maintenance job and the archive export to the cold storage (ADR-0012, ADR-0018), the machine page, and **accounts, roles and the audit trail** (ADR-0013, ADR-0019: Identity stores, first Admin command, two-factor policy, hash chain) |
+| 0.2 | Linux logs, Linux metrics (processor, memory, disks; ADR-0008), hot storage with its maintenance job and the archive export to the cold storage (ADR-0012, ADR-0018), the machine page, and **accounts, roles and the audit trail** (ADR-0020, ADR-0019: Identity stores, first Admin command, two-factor policy, hash chain) |
 | 0.3 | AI: LLM benchmark (ADR-0010), .NET preparation with pseudonymisation, Python training, ONNX inference, LLM report |
 | 0.4 | Windows agent (logs and metrics) and XML log parser |
 | 0.5 | Rules and CVE |
@@ -61,4 +61,4 @@ None.
 
 ## References
 
-- ADR-0008, ADR-0009, ADR-0010, ADR-0012, ADR-0013, ADR-0019, ADR-0017, ADR-0018.
+- ADR-0008, ADR-0009, ADR-0010, ADR-0012, ADR-0020, ADR-0019, ADR-0017, ADR-0018.

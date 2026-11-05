@@ -13,7 +13,7 @@ The system has the following links:
 
 | Link | Network | Purpose |
 |---|---|---|
-| agent → Collector | across the network | logs, heartbeats, inventory; commands in both directions (ADR-0013) |
+| agent → Collector | across the network | logs, heartbeats, inventory; commands in both directions (ADR-0020) |
 | web site → API | inside the "app" VM | everything the user interface shows or requests, including the account operations of ASP.NET Core Identity (ADR-0019) |
 | API → Collector | inside the "app" VM | notification of a new command, identifier only (ADR-0005) |
 | Collector → data gateway (`ingest`), API → data gateway (`manage`) | inside the "app" VM | all data access (ADR-0003) |
@@ -43,7 +43,7 @@ ADR-0017 later adds two links that follow the rules of this ADR: agent → Enrol
 - **TCP on localhost for internal links.** Rejected: it uses ports, is reachable by any local process, and cannot rely on file permissions. Microsoft documents Unix domain sockets as more efficient than TCP on the same machine.
 - **A dedicated data gateway socket for the web site's accounts.** Rejected: it would break the hierarchy (web site → Backend → data gateway) and spread the handling of connections and authorisations over two places; with a single path, every request of the web site goes through the same checks in the Backend.
 - **One data gateway socket for the whole Backend.** Rejected: with two Backend processes (ADR-0005), separate sockets give each process only the rights it needs.
-- **SSH or an inbound agent port for commands.** Rejected: see ADR-0013.
+- **SSH or an inbound agent port for commands.** Rejected: see ADR-0020.
 
 ## Consequences
 
@@ -68,4 +68,4 @@ ADR-0017 later adds two links that follow the rules of this ADR: agent → Enrol
 
 - Microsoft Learn, *Inter-process communication with gRPC* and *Inter-process communication with gRPC and Unix domain sockets* (consulted 2026-11-03).
 - Microsoft Learn, *Security considerations for Kestrel* (Unix socket permissions, consulted by the security review, 2026-11-03).
-- ADR-0003, ADR-0005, ADR-0006, ADR-0009, ADR-0012, ADR-0013, ADR-0019, ADR-0016, ADR-0017.
+- ADR-0003, ADR-0005, ADR-0006, ADR-0009, ADR-0012, ADR-0020, ADR-0019, ADR-0016, ADR-0017.

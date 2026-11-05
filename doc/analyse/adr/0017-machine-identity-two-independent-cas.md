@@ -137,4 +137,4 @@ The Enrolment service (`Dashboard.Enrolment`, ADR-0016) is a **signer only**. Th
 - Microsoft Learn, *Cross-platform cryptography in .NET* (OpenSSL dependency on Linux).
 - GitHub security advisories GHSA-rp2p-6cmp-jxj9 (CVE-2026-57108) and GHSA-qvw7-jm5c-6hqw (CVE-2026-50528), dotnet/runtime (consulted 2026-11-04).
 - RFC 5280, sections 4.2.1.13, 5.1.2.5 and 6.3.3.
-- ADR-0004, ADR-0005, ADR-0006, ADR-0007 (superseded), ADR-0013, ADR-0016.
+- ADR-0004, ADR-0005, ADR-0006, ADR-0007 (superseded), ADR-0020, ADR-0016.

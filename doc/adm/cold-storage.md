@@ -10,13 +10,12 @@ The cold storage holds the log archive, the prepared training data and the expor
 - [ ] The volume that holds the shares is encrypted at rest.
 - [ ] Shares and accounts follow the table below.
 
-| Share | Backend account | AI node account |
-|---|---|---|
-| Raw log archive | read and write | no access |
-| Prepared training data (pseudonymised) | read and write | read only |
-| Models | read only | read and write |
-| Audit anchors (ADR-0013) | create files only, no modification or deletion (WORM if the server offers it) | no access |
-| Audit archive (ADR-0013) | read and write | no access |
+| Share | Backend account | AI node account | Audit verifier account |
+|---|---|---|---|
+| Raw log archive | read and write | no access | no access |
+| Prepared training data (pseudonymised) | read and write | read only | no access |
+| Models | read only | read and write | no access |
+| Audit archive, hourly files that are also the anchors (ADR-0020) | **create files only**: no modification or deletion, owner's implicit rights removed; WORM folder if the server offers one | no access | read only |
 
 ## Server side
 

@@ -43,7 +43,7 @@ The first draft of this ADR proposed one process with two endpoints. The product
 
 ### Positive
 
-- A failure of the Collector does not take down the web site, and the reverse (commands then wait until the Collector is back, or expire, ADR-0013).
+- A failure of the Collector does not take down the web site, and the reverse (commands then wait until the Collector is back, or expire, ADR-0020).
 - The `ingest` and `manage` sockets now separate the Collector's rights from the API's rights.
 - Each process only exposes its own services: agents cannot reach the web site's services, and the web site cannot reach the agent services.
 
@@ -55,4 +55,4 @@ The first draft of this ADR proposed one process with two endpoints. The product
 
 ## References
 
-- ADR-0004, ADR-0006, ADR-0009, ADR-0013, ADR-0019, ADR-0017.
+- ADR-0004, ADR-0006, ADR-0009, ADR-0020, ADR-0019, ADR-0017.

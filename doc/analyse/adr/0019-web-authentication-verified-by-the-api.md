@@ -19,7 +19,7 @@ This ADR keeps every decision of ADR-0014 except where it says otherwise, and mo
 
 ### Kept from ADR-0014
 
-- Local accounts with the roles **Reader**, **Operator** (Reader, plus issuing commands of the catalogue, ADR-0013) and **Admin** (Operator, plus accounts, roles and configuration).
+- Local accounts with the roles **Reader**, **Operator** (Reader, plus issuing commands of the catalogue, ADR-0020) and **Admin** (Operator, plus accounts, roles and configuration).
 - Lockout and security stamp mandatory; two-factor authentication (TOTP) under a policy chosen by the administrator at installation (disabled, per account, required for Operator and Admin), with a warning on the dashboard when an Operator or Admin account has no second factor.
 - Rate limiting of the sign-in endpoint.
 - The first Admin is created by a one-time installation command on the API host; no default account or password.
@@ -83,4 +83,4 @@ This ADR keeps every decision of ADR-0014 except where it says otherwise, and mo
 - Microsoft Learn, *Configure ASP.NET Core to work with proxy servers and load balancers* (consulted 2026-11-04).
 - Microsoft Learn, *ASP.NET Core Blazor authentication and authorization* (revalidation interval) and *Key management in ASP.NET Core* (key ring storage), cited by the second reading; not re-read by the main developer.
 - [Second reading report](../reviews/2026-11-04-second-reading.md), finding B1 and I7.
-- ADR-0003, ADR-0004, ADR-0005, ADR-0013, ADR-0014 (superseded), ADR-0020.
+- ADR-0003, ADR-0004, ADR-0005, ADR-0020, ADR-0014 (superseded), ADR-0020.
