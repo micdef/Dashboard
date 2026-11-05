@@ -54,9 +54,15 @@ __pycache__/
 *.db
 *.sqlite
 
-# Experiment tracking and training outputs, at the root only (same reason as
-# /data/: an unanchored "outputs/" would also ignore a C# folder named Outputs/).
-/mlruns/
+# Experiment tracking folders, wherever training is run from (no C# folder
+# uses these names).
+mlruns/
+wandb/
+lightning_logs/
+.ipynb_checkpoints/
+
+# Training outputs, at the root only (same reason as /data/: an unanchored
+# "outputs/" would also ignore a C# folder named Outputs/).
 /outputs/
 
 # Small synthetic datasets used by the tests, never real logs. This exception
