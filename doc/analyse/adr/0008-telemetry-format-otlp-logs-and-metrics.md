@@ -62,4 +62,4 @@ In the OpenTelemetry Protocol (OTLP), the export requests carry only the telemet
 ## References
 
 - OpenTelemetry, `opentelemetry-proto`: `opentelemetry/proto/collector/logs/v1/logs_service.proto` and `opentelemetry/proto/collector/metrics/v1/metrics_service.proto` (consulted 2026-11-04).
-- ADR-0004, ADR-0012, ADR-0015, ADR-0021.
+- ADR-0004, ADR-0012, ADR-0015, ADR-0021; ADR-0022 complements this ADR.

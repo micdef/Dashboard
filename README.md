@@ -38,6 +38,7 @@ Dashboard is the final project of the AI developer training at Technofutur TIC (
 | Data gateway | the only process with database access (stored procedures, TVPs, views) |
 | Web site (Blazor Web App) | the user interface |
 | AI node | Python training and the local LLM; no database access |
+| Audit verifier | runs on another machine; keeps its own copy of the audit trail, checks it every hour and watches the Backend |
 | SQL Server | system of record |
 
 Every decision, with its context, alternatives and consequences, is recorded in the [Architecture Decision Records](doc/analyse/adr/README.md).
@@ -112,6 +113,7 @@ Dashboard est le projet de fin de la formation Développeur IA de Technofutur TI
 | Passerelle de données (very-back-end) | seul processus qui accède à la base (procédures stockées, TVP, vues) |
 | Site web (Blazor Web App) | l'interface utilisateur |
 | Nœud IA | entraînement Python et LLM local ; aucun accès à la base |
+| Vérificateur d'audit | tourne sur une autre machine ; garde sa propre copie de l'audit, la vérifie toutes les heures et surveille le Backend |
 | SQL Server | stockage de référence |
 
 Chaque décision, avec son contexte, ses alternatives et ses conséquences, est consignée (en anglais) dans les [Architecture Decision Records](doc/analyse/adr/README.md).

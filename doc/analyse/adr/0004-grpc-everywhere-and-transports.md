@@ -13,8 +13,8 @@ The system has the following links:
 
 | Link | Network | Purpose |
 |---|---|---|
-| agent → Collector | across the network | logs, heartbeats, inventory; commands in both directions (ADR-0020) |
-| web site → API | inside the "app" VM | everything the user interface shows or requests, including the account operations of ASP.NET Core Identity (ADR-0019) |
+| agent → Collector | across the network | logs, heartbeats, inventory; commands in both directions (ADR-0024) |
+| web site → API | inside the "app" VM | everything the user interface shows or requests, including the account operations of ASP.NET Core Identity (ADR-0023) |
 | API → Collector | inside the "app" VM | notification of a new command, identifier only (ADR-0005) |
 | Collector → data gateway (`ingest`), API → data gateway (`manage`) | inside the "app" VM | all data access (ADR-0003) |
 | Backend → AI node | across the network | LLM report generation (ADR-0009) |
@@ -22,7 +22,7 @@ The system has the following links:
 
 Supervised machines must not expose any inbound port for the system.
 
-ADR-0021 later adds two links that follow the rules of this ADR: agent → Enrolment service (enrolment and renewal, opened by the agent) and Enrolment service → API (a Unix domain socket reserved for it). See also ADR-0016.
+ADR-0021 later adds two links that follow the rules of this ADR: agent → Enrolment service (enrolment and renewal, opened by the agent) and Enrolment service → API (a Unix domain socket reserved for it). See also ADR-0016. ADR-0022 and ADR-0025 later add the links of the verifier, the alerts, the database backups, the revocation lists and the agent packages; ADR-0025 lists them.
 
 ## Decision
 
@@ -43,7 +43,7 @@ ADR-0021 later adds two links that follow the rules of this ADR: agent → Enrol
 - **TCP on localhost for internal links.** Rejected: it uses ports, is reachable by any local process, and cannot rely on file permissions. Microsoft documents Unix domain sockets as more efficient than TCP on the same machine.
 - **A dedicated data gateway socket for the web site's accounts.** Rejected: it would break the hierarchy (web site → Backend → data gateway) and spread the handling of connections and authorisations over two places; with a single path, every request of the web site goes through the same checks in the Backend.
 - **One data gateway socket for the whole Backend.** Rejected: with two Backend processes (ADR-0005), separate sockets give each process only the rights it needs.
-- **SSH or an inbound agent port for commands.** Rejected: see ADR-0020.
+- **SSH or an inbound agent port for commands.** Rejected: see ADR-0024.
 
 ## Consequences
 
@@ -57,8 +57,8 @@ ADR-0021 later adds two links that follow the rules of this ADR: agent → Enrol
 
 ### Negative
 
-- The API trusts the web site for the identity and the role of the user who makes a request (see ADR-0019): a compromised web site process could act as any user.
-- The API relays account records, password hashes included, between the web site and the data gateway; they must never be logged.
+- The API trusts the web site for the identity and the role of the user who makes a request: a compromised web site process could act as any user. (Editorial note: ADR-0023 later replaces this trust with sessions issued and checked by the API.)
+- The API relays account records, password hashes included, between the web site and the data gateway; they must never be logged. (Editorial note: since ADR-0019, kept by ADR-0023, the web site never receives a stored secret.)
 - A gRPC channel configured for Unix domain sockets (through `SocketsHttpHandler.ConnectCallback`) supports neither client-side load balancing nor connectivity state tracking. Neither is needed on a single VM.
 - Browsers cannot call gRPC services directly (without gRPC-Web); this is not a problem with Blazor Interactive Server, whose calls to the Backend run on the server.
 - The LLM HTTP API has no built-in authentication (**not verified** for the chosen server); its port must be reachable only from the Backend, by firewall.
@@ -68,4 +68,4 @@ ADR-0021 later adds two links that follow the rules of this ADR: agent → Enrol
 
 - Microsoft Learn, *Inter-process communication with gRPC* and *Inter-process communication with gRPC and Unix domain sockets* (consulted 2026-11-03).
 - Microsoft Learn, *Security considerations for Kestrel* (Unix socket permissions, consulted by the security review, 2026-11-03).
-- ADR-0003, ADR-0005, ADR-0006, ADR-0009, ADR-0012, ADR-0020, ADR-0019, ADR-0016, ADR-0021.
+- ADR-0003, ADR-0005, ADR-0006, ADR-0009, ADR-0012, ADR-0016, ADR-0021, ADR-0023, ADR-0024; ADR-0022 and ADR-0025 complement this ADR.

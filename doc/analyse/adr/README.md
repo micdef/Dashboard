@@ -19,7 +19,7 @@ This folder holds the Architecture Decision Records (ADR) of the Dashboard proje
 | Superseded by ADR-NNNN | Replaced by a later ADR (linked). |
 | Deprecated | No longer applies, without a replacement. |
 
-Open points marked "raised in review" were added after the team review of 2026-11-03; every one of them was decided on 2026-11-04. A second team review took place on 2026-11-04, after the decisions ([report](../reviews/2026-11-04-second-reading.md)).
+Open points marked "raised in review" were added after the team review of 2026-11-03; every one of them was decided on 2026-11-04. A second team review took place on 2026-11-04, after the decisions ([report](../reviews/2026-11-04-second-reading.md)), and a third one on 2026-11-05 on the ADRs that came out of it ([report](../reviews/2026-11-05-third-reading.md)).
 
 ## Vocabulary
 
@@ -51,7 +51,10 @@ Open points marked "raised in review" were added after the team review of 2026-1
 | [0016](0016-components-and-deployment-with-enrolment.md) | Components and deployment topology, with the Enrolment service | Accepted | 2026-11-04 |
 | [0017](0017-machine-identity-two-independent-cas.md) | Machine identity with two independent certificate authorities | Superseded by ADR-0021 | 2026-11-04 |
 | [0018](0018-cold-storage-any-smb3-file-server.md) | Cold storage on any SMB 3 file server, mounted by the operating system | Accepted | 2026-11-04 |
-| [0019](0019-web-authentication-verified-by-the-api.md) | Web authentication verified by the API, with step-up for sensitive actions | Accepted | 2026-11-05 |
-| [0020](0020-remote-commands-and-keyed-audit-trail.md) | Remote commands, and a keyed audit trail that cannot be purged early | Accepted | 2026-11-05 |
+| [0019](0019-web-authentication-verified-by-the-api.md) | Web authentication verified by the API, with step-up for sensitive actions | Superseded by ADR-0023 | 2026-11-05 |
+| [0020](0020-remote-commands-and-keyed-audit-trail.md) | Remote commands, and a keyed audit trail that cannot be purged early | Superseded by ADR-0024 | 2026-11-05 |
 | [0021](0021-machine-identity-from-the-first-increment.md) | Machine identity from the first increment, with a dedicated revocation list service | Accepted | 2026-11-05 |
 | [0022](0022-operations-alerts-backups-and-reconciliation.md) | Operations: alerts, monitoring of the monitor, backups and reconciliation | Accepted | 2026-11-05 |
+| [0023](0023-web-sessions-issued-by-the-api.md) | Web sessions issued by the API, and a host channel for security settings | Accepted | 2026-11-05 |
+| [0024](0024-audit-trail-anchored-by-the-verifier.md) | Audit trail written by the data gateway and anchored by the independent verifier | Accepted | 2026-11-05 |
+| [0025](0025-enrolment-updates-alerts-and-links.md) | Enrolment safeguards, signed agent updates, protected alerts and the added links | Accepted | 2026-11-05 |

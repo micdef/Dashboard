@@ -56,4 +56,4 @@ This ADR complements ADR-0012; it does not replace it. Its decisions on protocol
 - Microsoft Learn, *SMB security enhancements*, section "Enable SMB Encryption", https://learn.microsoft.com/windows-server/storage/file-server/smb-security (consulted 2026-11-04).
 - Samba, *smb.conf(5)*, parameter `server smb encrypt`, https://www.samba.org/samba/docs/current/man-html/smb.conf.5.html (consulted 2026-11-04).
 - QNAP, *How do I enable and manage SMB encryption in QNAP NAS* (consulted 2026-11-04).
-- ADR-0004, ADR-0006, ADR-0012.
+- ADR-0004, ADR-0006, ADR-0012; ADR-0022 complements this ADR.

@@ -56,11 +56,11 @@ Deployment rules:
 
 ### Negative
 
-- Five services on one VM share its resources; a runaway process can starve the others. Resource limits per systemd unit should be considered at deployment.
+- Five services on one VM (six with `Dashboard.Crl`, ADR-0021) share its resources; a runaway process can starve the others. Resource limits per systemd unit should be considered at deployment.
 - More units to deploy and monitor than a single process.
-- The agents reach two endpoints of the "app" VM (Collector, Enrolment service), which the firewall rules must allow.
+- The agents reach two endpoints of the "app" VM (Collector, Enrolment service; three with `Dashboard.Crl`, ADR-0021), which the firewall rules must allow.
 
 ## References
 
-- ADR-0001 (superseded), ADR-0003, ADR-0004, ADR-0005, ADR-0007 (superseded), ADR-0009, ADR-0021.
+- ADR-0001 (superseded), ADR-0003, ADR-0004, ADR-0005, ADR-0007 (superseded), ADR-0009, ADR-0021; ADR-0025 complements this ADR.
 - Microsoft Learn, *Configure certificate authentication in ASP.NET Core*, section "Review proxy and load balancer scenarios" (consulted 2026-11-03).

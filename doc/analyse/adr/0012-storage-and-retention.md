@@ -112,4 +112,4 @@ None.
 - Microsoft Learn, *Columnstore indexes - design guidance*, section "Use table partitions for data management and query performance" (consulted 2026-11-03).
 - Microsoft Learn, *TRUNCATE TABLE (Transact-SQL)* and *Columnstore indexes - query performance* (consulted by the review, 2026-11-03).
 - PostgreSQL 18 documentation, *Unsupported features* (T180 System-versioned tables), https://www.postgresql.org/docs/current/unsupported-features-sql-standard.html (consulted 2026-11-04).
-- ADR-0003, ADR-0004, ADR-0008, ADR-0009; ADR-0018 complements this ADR on the cold storage.
+- ADR-0003, ADR-0004, ADR-0008, ADR-0009; ADR-0018 complements this ADR on the cold storage, ADR-0022 on reconciliation, and ADR-0024 for the audit files.

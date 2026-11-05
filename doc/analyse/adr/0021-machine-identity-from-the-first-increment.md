@@ -32,14 +32,14 @@ This ADR keeps every decision of ADR-0017 except where it says otherwise. It als
 
 ### Enrolment token
 
-- From **0.1**, a token is created with a **command on the API host**, like the first Admin (ADR-0019). The command stays available afterwards.
-- From **0.2**, an Admin can also create a token in the web site, after step-up (ADR-0019).
+- From **0.1**, a token is created with a **command on the API host**, like the first Admin (ADR-0023). The command stays available afterwards.
+- From **0.2**, an Admin can also create a token in the web site, after step-up (ADR-0023).
 - The agent accepts the token **only from a file readable by root only, or from standard input**, never as a command-line argument (which would be visible in the process list and in the shell history). It deletes the file after use.
-- Every issuance and revocation is recorded in the **issuance register**, which also serves the reconciliation. In 0.1, before the audit trail exists, the register is the only record. When 0.2 is installed, the existing register entries are written as the first rows of the audit trail (ADR-0020), marked "recorded before the audit trail".
+- Every issuance and revocation is recorded in the **issuance register**, which also serves the reconciliation. In 0.1, before the audit trail exists, the register is the only record. When 0.2 is installed, the existing register entries are written as the first rows of the audit trail (ADR-0024), marked "recorded before the audit trail".
 
 ### Revocation list service
 
-- A dedicated service, **`Dashboard.Crl`**, serves the revocation lists as static files over plain HTTP. Revocation lists are signed, so their integrity does not depend on the transport; plain HTTP is the usual scheme for a distribution point (RFC 5280).
+- A dedicated service, **`Dashboard.Crl`**, serves the revocation lists as static files over plain HTTP. Revocation lists are signed, so their integrity does not depend on the transport; plain HTTP is a scheme that RFC 5280 provides for distribution points (section 4.2.1.13; the wording of the RFC is **not verified**).
 - It is a small Kestrel host: `GET` only, a read-only directory, its own user and a hardened systemd unit. It listens **only on the interface facing the supervised machines**, never on the internet-facing reverse proxy.
 - The Enrolment service writes the Agent CA list into that directory; the product owner places the Server CA list there after signing it offline. `Dashboard.Crl` only reads.
 - It does not depend on the Enrolment service, so the lists stay available when that service is down. It is a third endpoint for the agents, to be allowed in the firewall.
@@ -61,7 +61,7 @@ This ADR keeps every decision of ADR-0017 except where it says otherwise. It als
 
 ### Runtime and dependencies
 
-- The .NET runtime follows the **latest patch of the 10.0 channel**, and is never below **10.0.14** (the latest release on 2026-10-25, verified on the .NET release metadata). It fixes, among others, CVE-2026-57108 and CVE-2026-50528 (cited by ADR-0017) and CVE-2026-111497 (Brotli).
+- The .NET runtime follows the **latest patch of the 10.0 channel**, and is never below **10.0.14** (the latest release on 2026-10-25, verified on the .NET release metadata). It includes the fixes of 10.0.10 (CVE-2026-57108 and CVE-2026-50528, cited by ADR-0017) and fixes CVE-2026-111497 (Brotli), which is in the CISA catalogue of known exploited vulnerabilities.
 - **Brotli decompression is never enabled**: neither ASP.NET Core request decompression nor `HttpClient` automatic response decompression. The 10.0.14 release notes state that both are off by default.
 - The version floors of the other components are kept in [dependencies](../dependencies.md), not in an ADR, because they change every month. They are checked again by the CVE audit before each release.
 
@@ -98,4 +98,4 @@ This ADR keeps every decision of ADR-0017 except where it says otherwise. It als
 - dotnet/runtime source, `OpenSslCrlCache.cs`, cited by the second reading; not re-read by the main developer.
 - RFC 5280, section 4.2.1.13 (distribution points).
 - [Second reading report](../reviews/2026-11-04-second-reading.md), findings I1 to I4 and I8.
-- ADR-0004, ADR-0005, ADR-0015, ADR-0016, ADR-0017 (superseded), ADR-0019, ADR-0020.
+- ADR-0004, ADR-0005, ADR-0015, ADR-0016, ADR-0017 (superseded), ADR-0023, ADR-0024; ADR-0025 complements this ADR.

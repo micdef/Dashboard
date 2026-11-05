@@ -88,4 +88,4 @@ The solution is a `.slnx`. The .NET CI builds through a solution filter (`.slnf`
 ## References
 
 - Microsoft Learn, *Common web application architectures*, section "Clean architecture" (consulted during scoping, 2026-11-03).
-- ADR-0003, ADR-0004, ADR-0005, ADR-0011.
+- ADR-0003, ADR-0004, ADR-0005, ADR-0011; ADR-0022 complements this ADR.

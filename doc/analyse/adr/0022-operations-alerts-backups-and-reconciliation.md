@@ -6,13 +6,13 @@
 | Date | 2026-11-05 |
 | Decider | Michaël Defraene (product owner, architect) |
 | Drafted by | Claude (main developer), after the second reading of 2026-11-04 |
-| Complements | ADR-0004, ADR-0006, ADR-0008, ADR-0012, ADR-0018, ADR-0020 |
+| Complements | ADR-0004, ADR-0006, ADR-0008, ADR-0012, ADR-0018, ADR-0024 |
 
 ## Context
 
 The ADRs say "raises an alert" about fifteen times, but none says where an alert goes: every failure indicator lives on the dashboard, which nobody may be watching, and which disappears with the Collector or the "app" VM. No ADR covers the backup of the database, the system of record. The second reading also found ways for data to be lost without anyone noticing: an export that skips rows of transactions still open, a checksum that proves a file is intact but not complete, a partial failure acknowledged as a success, metrics arriving after their hour was aggregated, a log source that stops while the heartbeat stays green, and a cold storage mount that disappears (findings I5 and I6).
 
-This ADR adds to the ADRs it complements; it changes none of their decisions.
+This ADR adds to the ADRs it complements; it changes none of their decisions, but it adds one link to the list of ADR-0004 (SQL Server VM → cold storage). ADR-0025 lists every link added since ADR-0004.
 
 ## Decision
 
@@ -31,7 +31,7 @@ This ADR adds to the ADRs it complements; it changes none of their decisions.
 
 ### Monitoring of the monitor
 
-- The **independent verification tool** of ADR-0020, which runs on another machine than the "app" VM under a systemd timer, also checks at each run the health checks of the Collector and the API, and the age of the Collector's last self-heartbeat.
+- The **independent verification tool** of ADR-0024, which runs on another machine than the "app" VM under a systemd timer, also checks at each run the health checks of the Collector and the API, and the age of the Collector's last self-heartbeat.
 - If they have not answered for a configured number of minutes, the tool sends a **critical alert itself**, through the same channel, without depending on the "app" VM.
 - When the Collector or the VBE is unreachable, the dashboard shows the whole fleet as **"unknown"**, never as "down" nor as "up" (ADR-0006).
 
@@ -47,13 +47,13 @@ This ADR adds to the ADRs it complements; it changes none of their decisions.
 
 - A **restore test** runs automatically every month into a disposable database. The age of the last backup of each kind and the result of the last restore test are shown on the dashboard and alerted.
 - The backups are written by the SQL Server service, not by the VBE: this is a documented exception to the link list of ADR-0004 (SQL Server VM → cold storage), with its own account on the share.
-- **Keys and secrets outside the database** are backed up offline by the product owner: the HMAC key of the audit trail (ADR-0020), the pseudonymisation key (ADR-0012), the key that encrypts the authenticator keys (ADR-0019), the backup encryption certificate, the Server CA key (ADR-0021), and the configuration files.
+- **Keys and secrets outside the database** are backed up offline by the product owner: the HMAC key of the audit trail (ADR-0024), the pseudonymisation key (ADR-0012), the key that encrypts the authenticator keys (ADR-0023), the backup encryption certificate, the Server CA key (ADR-0021), and the configuration files.
 - **Whole-system backups**: the installation guide states that the virtual machines themselves (the "app" VM, the SQL Server VM, the AI node) must also be backed up with the system administrator's own tool (snapshot or backup software). These are the administrator's responsibility; the guide lists what must be backed up, how each item is restored, and in which order, as a **disaster recovery plan**.
 
 ### Reconciliation of exports and purges
 
 - **Safety margin**: the log export selects rows by ingestion time only up to a margin behind the current time, longer than the longest allowed write transaction, so that rows of transactions still open are not skipped.
-- **Counts before purge**: each export records its row count, range and checksum in the database. The **purge procedure itself** compares the row count of the partition with the sum of the exported counts covering it, and refuses on any difference (as for the audit trail, ADR-0020). A refusal raises an alert.
+- **Counts before purge**: each export records its row count, range and checksum in the database. The **purge procedure itself** compares the row count of the partition with the sum of the exported counts covering it, and refuses on any difference (as for the audit trail, ADR-0024). A refusal raises an alert.
 - **Batches**: the batch identifier (ADR-0008) is written in the same transaction as the data it covers. Row-level failures returned by the procedures (one result per input row, ADR-0003) are mapped to `partial_success`; the Collector keeps the counters "received = stored + rejected" per machine, and a difference is shown and alerted. The retention of the batch identifiers is longer than the maximum age of an agent's buffer. A split batch gets deterministic identifiers.
 - **Late metrics**: a week of full-resolution metrics is purged only after its hourly aggregates exist **and** the maximum age of an agent's buffer has passed. Each aggregate stores its number of samples, and an aggregate is recomputed when late samples arrive before the purge.
 
@@ -97,4 +97,4 @@ This ADR adds to the ADRs it complements; it changes none of their decisions.
 
 - Microsoft Learn, *Editions and supported features of SQL Server 2025*, section "Security" (encryption for backups in Standard) (consulted 2026-11-04).
 - [Second reading report](../reviews/2026-11-04-second-reading.md), findings I5 and I6.
-- ADR-0003, ADR-0004, ADR-0006, ADR-0008, ADR-0012, ADR-0018, ADR-0019, ADR-0020, ADR-0021.
+- ADR-0003, ADR-0004, ADR-0006, ADR-0008, ADR-0012, ADR-0018, ADR-0021, ADR-0023, ADR-0024; ADR-0025 complements this ADR.
