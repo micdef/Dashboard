@@ -45,7 +45,11 @@ Dashboard supervises a small fleet of Linux and Windows servers: heartbeats, inv
 - Keep the attribution lines (`Co-Authored-By`, "Generated with Claude Code").
 - **Merge commits only**: never squash, never rebase. **No history rewriting** on a shared branch. Merged branches are deleted by Claude, locally and on GitHub.
 - SemVer; before 1.0.0: `0.x.y`, with `-alpha.N` / `-beta.N`.
-- GitHub rulesets (to be set up by the product owner), on `main`, `dev` and `release/**`: pull request required, required checks, **branch up to date before merging** (the checks run against the current base), merge commit only, no force push, no bypass. Deletion is forbidden on `main` and `dev` only, since `release/X.Y.Z` is deleted after its version is published. Tags `v*` can be neither updated nor deleted. The exact ruleset options are **not verified** against the GitHub documentation yet.
+- GitHub rulesets (set up on 2026-11-05, the branch ones copied from BoardGamesPlatform), all without bypass:
+  - *Protect main and dev*: pull request required, merge commit only, review threads resolved before merging, no force push, no deletion;
+  - *Protect release branches* (`release/**`): the same, except deletion, since `release/X.Y.Z` is deleted after its version is published;
+  - *Protect version tags* (`v*`): a tag can be neither moved nor deleted.
+- The required checks, with **branch up to date before merging**, are added to the branch rulesets with the first CI: GitHub enforces an up-to-date branch only through required checks, and a required check that no CI reports would block every merge.
 
 ### Who does what
 
@@ -92,10 +96,11 @@ When Claude opens several pull requests while the product owner is away, they fo
 
 - each branch starts from the previous one, and every pull request targets `release/X.Y.Z`;
 - each pull request states its place in the chain ("2 of 3, after #12"), and the closing report gives the order in which to review and merge;
-- **a chain is merged in order only**: every pull request after the first stays a draft until the previous one is merged;
+- every pull request of the chain is **ready for review** when it is opened, so that the product owner can merge the whole chain, in order, while Claude is not running;
+- **a chain is merged in order only**: the first line of each pull request after the first says "Do not merge before #n";
 - once the previous one is merged, the diff of the next one shrinks to its own commits;
-- merging one pull request must re-run the checks of the next one, so that he never merges on checks run against an old base. The ruleset "branch up to date before merging" enforces it; how the CI re-runs the checks is decided when the CI is written (**not verified**: GitHub may not re-run the checks of a pull request when only its base branch changes). Until then, Claude merges `release/X.Y.Z` into the next branch (never a rebase) and pushes it;
-- if that update has a conflict, Claude does not resolve it alone: it says so in the pull request, and the agents concerned review the resolution before the product owner merges.
+- before merging the next one, its checks must run against the current base: the product owner uses GitHub's "Update branch" button (a merge of the base, never a rebase), which re-runs the checks, and merges once they are green. How the CI re-runs the checks is confirmed when the CI is written (**not verified**: GitHub may not re-run them when only the base branch changes). When Claude is running, it does the update itself;
+- if the update has a conflict, nobody resolves it alone: the chain stops there, Claude says so in the pull request, and the agents concerned review the resolution before the product owner merges.
 
 ### Changelog
 
