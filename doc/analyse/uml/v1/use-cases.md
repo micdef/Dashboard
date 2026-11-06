@@ -110,7 +110,7 @@ flowchart LR
 - The list of actions under step-up is the one of ADR-0023, as changed by ADR-0026; revoking a machine and retiring a host need a single-use proof.
 - No critical alert can be silenced from the web site: it can only be acknowledged. Every open critical alert, acknowledged or not, is notified again at an interval set on the host, and the dashboard shows its age. Silencing applies to one Warning alert, within a duration and a number of renewals set in the host's configuration file; the dashboard shows who silenced it and until when (ADR-0026).
 - Acknowledging the "audit incident" alert does not lift the block: only the host command does (ADR-0024, ADR-0026).
-- A host is never deleted. Only a host revoked explicitly can be retired; a connection attempt from a retired host raises a critical alert; a machine that comes back is enrolled under a new `HostId` (ADR-0026).
+- A host is never deleted. Only a host revoked explicitly can be retired; a connection attempt with the certificate of a retired host raises one critical alert per host, which counts further attempts; a machine that comes back is enrolled under a new `HostId` (ADR-0026).
 - AI report requests are rate-limited; a refused request returns "limit reached, retry at T"; a request during training is refused with its reason; a failed or late daily report raises a Warning (ADR-0026).
 - Lowering a security setting is not possible from the web site: it goes through the host channel (ADR-0023).
 - While an audit incident is open, every audited action is refused until the host administrator acknowledges it (ADR-0024).
@@ -130,7 +130,6 @@ flowchart LR
         Incident(["Acknowledge an audit incident (0.2)"])
         BreakGlass(["Break-glass: unlock an Admin and reset its second factor when no Admin can sign in (0.2)"])
         Monitor(["Create or revoke a monitor token for the verifier (0.2)"])
-
     end
 
     subgraph AppVm ["On the app VM, steps of the Agent CA re-key"]
@@ -151,7 +150,6 @@ flowchart LR
     HostAdmin --> Incident
     HostAdmin --> BreakGlass
     HostAdmin --> Monitor
-
     HostAdmin --> Rekey
     HostAdmin --> AlertConfig
     HostAdmin --> Install

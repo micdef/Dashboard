@@ -29,7 +29,7 @@ This ADR keeps every decision of ADR-0021 except where it says otherwise.
 
 ### Kept from ADR-0021
 
-Everything below stays as ADR-0021 decided it; ADR-0021 holds the details.
+The list below is a reminder of the main points, not a complete list: every decision of ADR-0021 that this ADR does not change stays, and ADR-0021 holds the details (renewal rules, CSR policy, rate limits, sockets, the details of `Dashboard.Crl`).
 
 - The machine is identified by the SHA-256 hash of its authenticated client certificate, mapped to a `HostId` by the API; the mapping fails closed.
 - **Two independent CAs**: the Server CA (self-signed, key offline with the product owner) signs only the Collector's server certificate; the Agent CA (self-signed, key online in the Enrolment service) signs agent certificates and the Enrolment service's server certificate; the channels use **distinct DNS names**.
@@ -39,7 +39,7 @@ Everything below stays as ADR-0021 decided it; ADR-0021 holds the details.
 - The **`Dashboard.Crl`** service, which serves the revocation lists as static files.
 - The limit of the revocation of the Collector certificate (up to 12 months) and the written **compromise procedure** of the Collector key.
 - "Down: refused" and "down: silent" on the host page; the days before the certificate expires in the heartbeat.
-- The .NET runtime on the latest patch of the 10.0 channel, never below the floor of ADR-0021; Brotli decompression never enabled; the other floors in [dependencies](../dependencies.md).
+- The .NET runtime on the latest patch of the 10.0 channel, never below the floor stated in ADR-0021 (10.0.14); Brotli decompression never enabled; the other floors in [dependencies](../dependencies.md).
 
 ### Trust rule
 
@@ -48,8 +48,10 @@ Everything below stays as ADR-0021 decided it; ADR-0021 holds the details.
 - A channel never trusts the Server CA and an Agent CA together. The anchor set is checked when the service starts, and the service refuses to start, with a clear message, unless:
   - the set holds one or two anchors;
   - each anchor is self-signed and marked as a CA;
-  - each anchor is known as an Agent CA, active or in an overlap period, from the state of the re-key;
+  - each anchor is known as an Agent CA, active or in an overlap period: on the "app" VM, from the state of the re-key; on an agent, from the signed package that delivered it;
   - no anchor is a retired Agent CA, nor the Server CA.
+
+  If the state of the re-key cannot be read, the service also refuses to start.
 - Microsoft Learn documents `X509ChainPolicy.CustomTrustStore` as a collection of certificates, used with `X509ChainTrustMode.CustomRootTrust`. That several independent self-signed roots are each accepted, on Linux and on Windows, and how Kestrel behaves on its own in its client-certificate callback, are **not verified**: a test checks them when the 0.1 work starts, with two Agent CAs that must each succeed and a third CA that must fail. If the test fails, the 0.1 work stops and the product owner decides before any single-anchor fallback.
 
 ### Re-key of the Agent CA

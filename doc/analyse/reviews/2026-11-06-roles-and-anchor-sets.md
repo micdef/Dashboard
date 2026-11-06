@@ -72,3 +72,17 @@ All findings of the first review were fixed or decided. The second reading (Joca
 | Revoked hosts blocked the retirement of the old CA; coverage self-reported (Boba Fett) | revoked hosts are out of the report, the check uses fresh data, the limit stated |
 | The backup guide did not list the new keys (Ackbar) | `doc/adm/backup-and-recovery.md` updated |
 | Accuracy and language (C-3PO, Jocasta Nu) | fixed: the Operator row, the tightening of ADR-0023 stated, the stored secrets named, the register paragraph split |
+
+## 4. Third reading
+
+The third reading (Jocasta Nu, Ackbar, Boba Fett, C-3PO) found every earlier finding fixed, no blocking point, and:
+
+| Finding | Outcome |
+|---|---|
+| ADR-0026, a complement, tightens rules of ADR-0022, ADR-0023 and ADR-0025 (Jocasta Nu, Boba Fett, C-3PO) | product owner: a rule in the ADR index, "a complement may tighten a rule, if it says so and names it; it never weakens one", and a "tightened by" reference in the tightened ADRs |
+| Anyone holding the (public) certificate of a retired host could raise the critical alert at will (Ackbar) | product owner: one open alert per retired host with a counter, refused attempts aggregated and rate-limited, the limit of the alert stated |
+| A symmetric key replaced without a new version would not be detected (Ackbar) | product owner: an HMAC with a dedicated register key, backed up offline |
+| The reading rule for references to superseded ADRs broke references made on purpose (Jocasta Nu) | the rule names the last ADR of the chain and excludes references made on purpose |
+| Minor points: the "Kept" list not exhaustive, the runtime floor, the anchor check on the agent, an unreadable re-key state, the alerts expected after a long outage, the empty lines in a diagram | fixed |
+
+Deferred: splitting two long bullets of the use case page (C-3PO, minor), with the next change of that page.

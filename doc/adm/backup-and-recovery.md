@@ -31,7 +31,7 @@ The Data Protection key ring of the web site is not backed up: losing it only si
 2. The "app" VM, or a new one; restore the keys, the secrets and the configuration files, then start the VBE, the API, the Collector, the Enrolment service and `Dashboard.Crl`.
 3. **Expected audit block**: a restored database is behind the head that the VBE recorded outside the database, so the VBE raises a critical alert and refuses audit writes (ADR-0024). Check with the independent verification tool that the missing rows are in its copy of the audit files, then acknowledge the incident with the host command.
 4. The AI node; restore its configuration; the models are on the cold storage.
-5. Agents reconnect on their own; a host whose certificate expired during the outage must be revoked, then gets a new enrolment token (ADR-0026).
+5. Agents reconnect on their own. A host whose certificate expired during the outage must be revoked, then gets a new enrolment token (ADR-0026). After a long outage, use the host commands for these revocations: each one raises a critical alert (ADR-0025), and these alerts are expected.
 
 ## Checks
 
