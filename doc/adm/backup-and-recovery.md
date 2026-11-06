@@ -14,8 +14,8 @@ What must be backed up for Dashboard, and in which order it is restored (ADR-002
 | Pseudonymisation key (ADR-0012) | "app" VM | the product owner | offline copy |
 | Key encrypting the authenticator keys (ADR-0023) | "app" VM | the product owner | offline copy |
 | Backup encryption certificate and its private key | SQL Server VM | the product owner | offline copy; without it, no backup can be restored |
-| Server CA key (ADR-0021) | offline medium | the product owner | second offline medium, stored separately |
-| Agent CA key (ADR-0021) | "app" VM | the product owner | offline copy |
+| Server CA key (ADR-0027) | offline medium | the product owner | second offline medium, stored separately |
+| Agent CA key (ADR-0027) | "app" VM | the product owner | offline copy |
 | GPG key of the agent packages, code signing certificate (ADR-0025) | product owner | the product owner | offline copy |
 | Configuration files of every component | each host | the system administrator | with the virtual machines; the deployment repository holds the configuration **without secrets** |
 | Secrets (SMTP and mount credentials, webhook address) | each host, in files readable by their service user only, or systemd credentials | the product owner | offline copy, with the keys |

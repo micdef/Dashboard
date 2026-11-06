@@ -97,4 +97,4 @@ This ADR keeps every decision of ADR-0019 except where it says otherwise.
 - Microsoft Learn, *Key storage providers in ASP.NET Core* and *Data Protection default settings*, consulted by the third reading on 2026-11-05.
 - Microsoft Learn, `UserManager<TUser>.CheckPasswordAsync` (virtual), consulted by the third reading on 2026-11-05.
 - [Third reading report](../reviews/2026-11-05-third-reading.md), findings T-B1, T-I1, T-I7, T-M1 to T-M3.
-- ADR-0003, ADR-0004, ADR-0005, ADR-0019 (superseded), ADR-0022, ADR-0024, ADR-0025.
+- ADR-0003, ADR-0004, ADR-0005, ADR-0019 (superseded), ADR-0022, ADR-0024, ADR-0025; ADR-0026 complements this ADR.

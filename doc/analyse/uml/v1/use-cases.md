@@ -21,10 +21,10 @@ The diagrams are written in [Mermaid](https://mermaid.js.org/), which GitHub and
 | Operator | person, web site | Reader, plus catalogue commands, AI report requests, acknowledging alerts, silencing Warning and Information alerts | ADR-0026 |
 | Admin | person, web site | Operator, plus accounts, roles, configuration, enrolment tokens, revoking machines, retiring hosts | ADR-0026 |
 | Host administrator | person, on the "app" VM and on the supervised machines | runs the host commands through the host channel of the API; installs the agents; carries out the Agent CA re-key on the "app" VM | ADR-0023, ADR-0025, ADR-0026 |
-| Key holder | person, offline | holds the Server CA key, which never reaches the "app" VM (ADR-0021), and the package signing keys, kept offline (ADR-0025); backs up offline the keys and secrets kept outside the database (ADR-0022) | ADR-0021, ADR-0022, ADR-0025 |
-| Agent | Dashboard program, on each supervised machine | enrols, reports, executes catalogue commands | ADR-0011, ADR-0016, ADR-0021, ADR-0024 |
+| Key holder | person, offline | holds the Server CA key, which never reaches the "app" VM (ADR-0027), and the package signing keys, kept offline (ADR-0025); backs up offline the keys and secrets kept outside the database (ADR-0022) | ADR-0027, ADR-0022, ADR-0025 |
+| Agent | Dashboard program, on each supervised machine | enrols, reports, executes catalogue commands | ADR-0011, ADR-0016, ADR-0027, ADR-0024 |
 | Verifier | Dashboard tool, on another machine than the "app" VM | the independent verification tool, enrolled with a "monitor" identity | ADR-0022, ADR-0024, ADR-0025 |
-| Scheduled jobs | time | systemd timers on Linux, SQL Server Agent for the backups | ADR-0010, ADR-0012, ADR-0021, ADR-0022, ADR-0024 |
+| Scheduled jobs | time | systemd timers on Linux, SQL Server Agent for the backups | ADR-0010, ADR-0012, ADR-0027, ADR-0022, ADR-0024 |
 
 The host administrator and the key holder can be the same person. They are two actors because they hold different rights: the host channel on the "app" VM, and keys kept offline.
 
@@ -36,7 +36,7 @@ flowchart LR
 
     subgraph Site ["Web site"]
         SignIn(["Sign in with password and second factor (0.2)"])
-        OwnFactor(["Set up, replace or remove one's own second factor (0.2)"])
+        OwnFactor(["Set up, replace or remove one's own second factor; regenerate one's recovery codes (0.2)"])
         Fleet(["View the fleet status (0.1, development page; 0.2)"])
         Machine(["View a machine: inventory, logs, metrics, certificate (0.2; Windows 0.4)"])
         Health(["View the health of Dashboard: backups, restore test, verifier, sources (0.2)"])
@@ -58,11 +58,11 @@ flowchart LR
 ```
 
 - The status page of 0.1 is for development only and is never deployed elsewhere (ADR-0015).
-- Changing one's own second factor needs step-up; under the policy "required", Operators and Admins cannot remove theirs, and their first sign-in forces its set-up (ADR-0026).
-- When the Collector or the data gateway cannot be reached, the whole fleet is shown as "unknown", never as "down" nor as "up" (ADR-0022). A machine whose certificate is refused is shown "down: refused", one that does not connect "down: silent" (ADR-0021).
+- Changing one's own second factor or recovery codes needs step-up, for every role. A recovery code is not a step-up proof, except to replace a lost factor, which raises a critical alert. Adding or replacing a factor on an Operator or Admin account raises a critical alert. Under the policy "required", an Operator or Admin account without a factor must set one up at its next sign-in, and cannot remove it (ADR-0026).
+- When the Collector or the data gateway cannot be reached, the whole fleet is shown as "unknown", never as "down" nor as "up" (ADR-0022). A machine whose certificate is refused is shown "down: refused", one that does not connect "down: silent" (ADR-0027).
 - Anomaly scoring is shown as "unavailable" when the model cannot be loaded, never as "no anomaly"; a source absent from the training data is "not covered by the model"; a failed report is shown as failed, never replaced by an older one (ADR-0009).
 - The audit views mark the entries of 0.1 as "recorded before the audit trail, not proven" (ADR-0025).
-- Each use of an enrolment token is shown with the source address of the request (ADR-0025). An Operator or Admin account without a second factor is shown as a warning (ADR-0019, kept by ADR-0023).
+- Each use of an enrolment token is shown with the source address of the request (ADR-0025). The audit trail records the identifier of a token or a session, never its value (ADR-0026).
 
 ## Operator and Admin
 
@@ -79,7 +79,7 @@ flowchart LR
         Command(["Issue a catalogue command (0.6)"])
         RequestReport(["Request an AI report (0.3)"])
         Acknowledge(["Acknowledge an alert (0.2)"])
-        Silence(["Silence a Warning or Information alert (0.2)"])
+        Silence(["Silence a Warning alert (0.2)"])
         Accounts(["Manage accounts and roles (0.2)"])
         Token(["Create an enrolment token (0.2)"])
         Revoke(["Revoke a machine (0.2)"])
@@ -107,13 +107,14 @@ flowchart LR
     Settings -. «include» .-> StepUp
 ```
 
-- The list of actions under step-up is the one of ADR-0023, extended by ADR-0026.
-- No critical alert can be silenced from the web site: it can only be acknowledged. Acknowledging keeps the alert open and its notifications running; silencing stops the notifications for a set duration (ADR-0026).
-- A host is never deleted: it is retired once revoked, and its data follows the retention rules (ADR-0026).
-- AI report requests are rate-limited by the configuration (ADR-0026).
+- The list of actions under step-up is the one of ADR-0023, as changed by ADR-0026; revoking a machine and retiring a host need a single-use proof.
+- No critical alert can be silenced from the web site: it can only be acknowledged, and it is notified again while it stays open. Silencing applies to one Warning alert, within a duration and a number of renewals set in the host's configuration file; the dashboard shows who silenced it and until when (ADR-0026).
+- Acknowledging the "audit incident" alert does not lift the block: only the host command does (ADR-0024, ADR-0026).
+- A host is never deleted. Only a host revoked explicitly can be retired; a connection attempt from a retired host raises a Warning; a machine that comes back is enrolled under a new `HostId` (ADR-0026).
+- AI report requests are rate-limited; a refused request returns "limit reached, retry at T"; a request during training is refused with its reason; a failed or late daily report raises a Warning (ADR-0026).
 - Lowering a security setting is not possible from the web site: it goes through the host channel (ADR-0023).
 - While an audit incident is open, every audited action is refused until the host administrator acknowledges it (ADR-0024).
-- A token can be created only for a new host, or for one without an active certificate (ADR-0025).
+- A token can be created only for a new host, or for one without an active certificate (ADR-0025), and never for a retired host (ADR-0026).
 
 ## Host administrator
 
@@ -129,7 +130,11 @@ flowchart LR
         Incident(["Acknowledge an audit incident (0.2)"])
         BreakGlass(["Break-glass: unlock an Admin and reset its second factor when no Admin can sign in (0.2)"])
         Monitor(["Create or revoke a monitor token for the verifier (0.2)"])
-        Rekey(["Re-key the Agent CA: generate, switch, retire the old one"])
+        KeyRegister(["Record an offline key backup in the register (0.1)"])
+    end
+
+    subgraph AppVm ["On the app VM, steps of the Agent CA re-key"]
+        Rekey(["Re-key the Agent CA: generate, switch, read the coverage, retire the old one (anchor sets from 0.1)"])
     end
 
     subgraph Hosts ["On the hosts, outside the Dashboard processes"]
@@ -146,6 +151,7 @@ flowchart LR
     HostAdmin --> Incident
     HostAdmin --> BreakGlass
     HostAdmin --> Monitor
+    HostAdmin --> KeyRegister
     HostAdmin --> Rekey
     HostAdmin --> AlertConfig
     HostAdmin --> Install
@@ -153,8 +159,10 @@ flowchart LR
     HostAdmin --> TrainNow
 ```
 
-- In 0.1, token creation and revocation are recorded only in the issuance register; when 0.2 is installed, the register entries are written into the audit trail, marked "recorded before the audit trail, not proven" (ADR-0021, ADR-0025).
-- From 0.2, every host command is audited with the host account that ran it (ADR-0023), and a machine revoked, a lowered setting and a break-glass unlock raise a critical alert (ADR-0025).
+- In 0.1, token creation and revocation are recorded only in the issuance register; when 0.2 is installed, the register entries are written into the audit trail, marked "recorded before the audit trail, not proven" (ADR-0027, ADR-0025).
+- From 0.2, every host command is audited with the host account that ran it (ADR-0023), and a machine revoked, a lowered setting, a break-glass unlock (ADR-0025) and a monitor identity created or revoked (ADR-0026) raise a critical alert.
+- The key holder records each offline backup in the key backup register through a host command; from 0.2, a missing or outdated backup raises a Warning (ADR-0026).
+- How the re-key steps reach the Enrolment service, which the host channel of the API does not drive, is decided when the 0.1 work starts (ADR-0027). Retiring the old Agent CA is refused while a host is not covered or unknown, unless an audited override is given (ADR-0027).
 - Expired archive files are deleted by an administrator account of the file server, never by a Dashboard account (ADR-0024). The right to erasure in the archive files follows a procedure written in the administration documentation before V1 (ADR-0012).
 
 ## Key holder
@@ -167,7 +175,7 @@ flowchart LR
         SignServer(["Sign the Collector certificate (0.1)"])
         SignCrl(["Re-sign the Server CA revocation list, at least every 6 months (0.1)"])
         SignPackages(["Sign the agent packages (RPM 0.1, MSI 0.4)"])
-        BackupKeys(["Back up each key and secret kept outside the database, from the increment that creates it (0.1 to 0.4)"])
+        BackupKeys(["Back up each key and secret kept outside the database, when it is created or replaced (0.1 to 0.4)"])
         Compromise(["Apply the compromise procedure of the Collector key"])
         Rekey(["Ship the new Agent CA anchor in a signed package (re-key, every 2 years)"])
     end
@@ -180,10 +188,10 @@ flowchart LR
     KeyHolder --> Rekey
 ```
 
-- The Server CA revocation list is valid 12 months and alerted 60 days before its `nextUpdate`; with strict revocation, an expired list cuts every agent off (ADR-0021).
-- The compromise procedure and the re-key both deliver the new trust anchor in an agent update, never through the Collector (ADR-0021, ADR-0025). The agents that do not have it yet are reported on the dashboard.
-- The list of keys and secrets to back up is in ADR-0022, completed by ADR-0026 (Agent CA key, package signing keys, recorded head of the audit chain).
-- The re-key takes two actors: the key holder signs the package with the new anchor, the host administrator switches the Enrolment service (ADR-0026). From 0.1, the channels that trust the Agent CA hold a set of anchors, so the re-key needs no change of the agent.
+- The Server CA revocation list is valid 12 months and alerted 60 days before its `nextUpdate`; with strict revocation, an expired list cuts every agent off (ADR-0027).
+- The compromise procedure and the re-key both deliver the new trust anchor in an agent update, never through the Collector (ADR-0027, ADR-0025). The agents that do not have it yet are reported on the dashboard.
+- The list of keys and secrets to back up is in ADR-0022, completed by ADR-0026.
+- The re-key takes two actors: the key holder signs the package with the new anchor, the host administrator runs the steps on the "app" VM. From 0.1, the channels that trust the Agent CA hold a set of anchors, so the re-key needs no change of the agent; after the retirement, the old key and its backup are destroyed (ADR-0027).
 
 ## Agent and verifier
 
@@ -224,7 +232,7 @@ flowchart LR
 ```
 
 - The connection is always opened by the agent; no inbound port is opened on the supervised machines (ADR-0004).
-- Revocation is strict: a missing, expired or unreachable revocation list is a failure, and the connection is refused (ADR-0021).
+- Revocation is strict: a missing, expired or unreachable revocation list is a failure, and the connection is refused (ADR-0027).
 - The verifier is enrolled with a token of kind "monitor"; its identity can call the health service of the Collector, nothing else (ADR-0025). It never connects to the database (ADR-0024). That it renews its certificate and fetches the revocation lists follows from "enrolled like an agent" (ADR-0025); no ADR states it explicitly.
 - The verifier runs under a systemd timer, every hour (ADR-0024). It raises its own critical alerts, through its own configuration, when a copied file differs, when sequence numbers are missing, when the newest file is too old, or when the Backend does not answer (ADR-0022, ADR-0024).
 - Agent updates never go through the Collector nor through remote commands (ADR-0025).
@@ -271,21 +279,21 @@ Work that the system does on its own, as part of the use cases above, without a 
 
 ## Decided on 2026-11-06
 
-The first version of this overview listed nine points that no ADR decided. The product owner decided them on 2026-11-06, after a second reading by the architecture review agent:
+The first version of this overview listed nine points that no ADR decided. The product owner decided them on 2026-11-06, after a second reading by the architecture review agent, then completed them after the team review of ADR-0026:
 
 | Point | Decision | Recorded in |
 |---|---|---|
 | Rights of the roles | one table of rights per role and channel; the Reader sees neither the value of enrolment tokens nor the sessions of other users | ADR-0026 |
-| Revoking a machine, deleting a host | Admin, with step-up; a host is never deleted, it is retired once revoked | ADR-0026 |
-| Silencing alerts | no critical alert can be silenced from the web site, only acknowledged; Warning and Information alerts can be silenced by an Operator or an Admin; acknowledging is open to Operators and Admins | ADR-0026 |
-| What triggers an AI report | a daily scheduled report, plus requests by an Operator or an Admin, rate-limited | ADR-0026 |
-| "Monitor" tokens | host channel only | ADR-0026 |
-| One's own second factor | each user sets it up (ADR-0019, kept by ADR-0023); changing it needs step-up | ADR-0026 |
-| Increments | inventory in 0.2 (Windows 0.4); each key backed up from the increment that creates it; archive deletion procedure written in 0.2 | ADR-0026 for the keys; this page for the rest |
-| Frequency of the training | weekly by default, set in the configuration, plus a manual run by the host administrator; promotion and rollback in the ADR planned at the start of 0.3 | this page |
-| Agent CA re-key | the key holder signs the package, the host administrator switches the Enrolment service; the trust stores hold a set of anchors from 0.1 | ADR-0026 |
+| Revoking a machine, deleting a host | Admin, with a single-use step-up proof; a host is never deleted, it is retired once revoked explicitly, and comes back under a new `HostId` | ADR-0026 |
+| Alerts | no critical alert can be silenced from the web site, only acknowledged, and it is notified again while open; one Warning alert can be silenced by an Operator or an Admin, within limits set on the host | ADR-0026 |
+| What triggers an AI report | a daily scheduled report, plus requests by an Operator or an Admin, rate-limited, with visible refusals | ADR-0026 |
+| "Monitor" tokens | host channel only, with a critical alert | ADR-0026 |
+| One's own second factor | each user sets it up (ADR-0019, kept by ADR-0023); changing it, or regenerating the recovery codes, needs step-up | ADR-0026 |
+| Increments | inventory in 0.2 (Windows 0.4); each key backed up when it is created or replaced, with a key backup register from 0.1; archive deletion procedure written in 0.2 | ADR-0026 for the keys; the description of pull request #7 for the rest |
+| Frequency of the training | weekly by default, set in the configuration, plus a manual run by the host administrator on the AI node; promotion and rollback in the ADR planned at the start of 0.3 | the description of pull request #7 |
+| Agent CA re-key | the key holder signs the package, the host administrator runs the steps on the "app" VM; the trust stores hold a set of anchors from 0.1 | ADR-0027 |
 
 ## Open points
 
-- Whether a retired host can be enrolled again under the same `HostId` (ADR-0026, decided with the host model in 0.2).
+- How the re-key steps reach the Enrolment service (ADR-0027, decided when the 0.1 work starts).
 - The promotion and rollback of a trained model (ADR planned at the start of 0.3).

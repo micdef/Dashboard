@@ -103,4 +103,4 @@ This ADR keeps every decision of ADR-0020 except where it says otherwise.
 - Samba, *vfs_worm(8)*, cited by the third reading.
 - GDPR, article 5(1)(e) (storage limitation).
 - [Third reading report](../reviews/2026-11-05-third-reading.md), findings T-B2, T-I2, T-I3, T-M6 and J-I3, J-I5.
-- ADR-0003, ADR-0012, ADR-0018, ADR-0020 (superseded), ADR-0021, ADR-0022, ADR-0023, ADR-0025.
+- ADR-0003, ADR-0012, ADR-0018, ADR-0020 (superseded), ADR-0021, ADR-0022, ADR-0023, ADR-0025; ADR-0026 complements this ADR.

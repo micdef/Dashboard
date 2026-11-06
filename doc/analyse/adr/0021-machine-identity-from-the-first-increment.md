@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Accepted |
+| Status | Superseded by [ADR-0027](0027-machine-identity-with-agent-ca-anchor-sets.md) |
 | Date | 2026-11-05 |
 | Decider | Michaël Defraene (product owner, architect) |
 | Drafted by | Claude (main developer), after the second reading of 2026-11-04 |
