@@ -40,8 +40,10 @@ The identity resolution and the propagation of revocations are recorded together
 - The list file is written atomically: a temporary file, then a rename.
 - **Delay**: a revoked machine is refused at once by the mapping. A party that checks the list itself may accept the revoked certificate until it loads a newer list: up to about 7 days for one that keeps the previous list until its `nextUpdate`.
 - **The Collector** loads the list from the local file (ADR-0025). It checks the signature against the Agent CA anchor set, the `nextUpdate`, and that the CRL number is not lower than the highest one it has loaded, which it keeps across restarts. It loads the file again when the file changes:
-  - a new file that fails these checks is refused and logged, and the Collector keeps the last valid list until its `nextUpdate`;
-  - with no valid list at all (missing, expired or invalid), it refuses every agent certificate (strict revocation, ADR-0017). This is a fault of the Collector, not of the hosts: it is a critical state (ADR-0032), and the dashboard shows the fleet as "unknown", not as "down: refused".
+  - a new file that fails these checks is refused and logged; the Collector keeps the last valid list until its `nextUpdate`, and the refusal is a critical state at once (ADR-0032), with the time left on the list it keeps;
+  - with no valid list at all (missing, expired or invalid), it refuses every agent certificate (strict revocation, ADR-0017). This is a fault of the Collector, not of the hosts: it is a critical state (ADR-0032), and the dashboard shows the fleet as "unknown", not as "down: refused";
+  - if the highest CRL number it keeps cannot be read at start-up, it loads no list, which is the case above. The recovery is a written procedure in `doc/adm/`. There is no override for a list with a lower number in V1.
+- The Collector records its critical states through its `ingest` socket, with a procedure of its own; the mapping stays read-only for it.
 
 ## Alternatives considered
 

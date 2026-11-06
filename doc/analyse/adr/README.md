@@ -65,4 +65,4 @@ Open points marked "raised in review" were added after the team review of 2026-1
 | [0029](0029-identity-resolution-and-revocation-propagation.md) | Identity resolution on the agent channel, and how revocations propagate | Accepted | 2026-11-06 |
 | [0030](0030-certificate-issuance-bound-by-the-api.md) | Certificate issuance bound by the API, and its records | Accepted | 2026-11-06 |
 | [0031](0031-enrolment-token-lifecycle.md) | Enrolment token lifecycle | Accepted | 2026-11-06 |
-| [0032](0032-critical-states-visible-on-the-host-in-0.1.md) | Critical states visible on the host from 0.1 | Accepted | 2026-11-06 |
+| [0032](0032-critical-states-visible-on-the-host-from-0.1.md) | Critical states visible on the host from 0.1 | Accepted | 2026-11-06 |

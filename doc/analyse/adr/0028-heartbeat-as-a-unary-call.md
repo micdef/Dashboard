@@ -24,8 +24,8 @@ The heartbeat must fit three rules that already exist: every gRPC call has a dea
 - The size of the message is bounded on the Collector (`MaxReceiveMessageSize`, ADR-0017, kept by ADR-0027). The HTTP/2 limits of Kestrel that bound the cost of many short calls (`KestrelServerOptions.Limits.Http2`: concurrent streams per connection, header size, keep-alive pings) are set in the Collector's configuration (Microsoft Learn, *Security considerations for the ASP.NET Core Kestrel web server*, aspnetcore-10.0).
 - **Host state**: the Fleet core (ADR-0006) flags a host:
   - "down: silent" when no heartbeat attempt reached the Collector for a number of intervals set in the configuration;
-  - "down: refused" when its attempts were refused, with the reason (ADR-0021): unknown, revoked or suspect identity (ADR-0029, ADR-0030);
-  - "unknown" when the Collector or the data gateway cannot be reached, as for the whole fleet (ADR-0022, ADR-0029).
+  - "down: refused" when its attempts were refused, with the reason (ADR-0021): certificate not mapped, revoked, or host suspect (ADR-0029, ADR-0030);
+  - "unknown" for the whole fleet when the Collector cannot be reached (the API checks its health service, ADR-0004), when the data gateway cannot be reached, or when the Collector has no usable revocation list (ADR-0022, ADR-0029). A host is never shown "down: refused" because of a fault of Dashboard itself.
 
   Time goes through `TimeProvider` (ADR-0006).
 - From 0.6, the command stream (ADR-0004) is a separate call on the same channel. Its state ("command channel connected") is shown as its own indicator, never as the liveness of the host.
