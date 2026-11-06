@@ -1,13 +1,17 @@
 # Machine identity in 0.1: sequences
 
-Sequence diagrams of the machine identity delivered by increment 0.1: the enrolment token, the first enrolment of an agent, the renewal of its certificate, and the renewal of the Enrolment service's own server certificate. They detail the use cases "Create an enrolment token" and "Enrol" of the [use cases of V1](../v1/use-cases.md), and follow ADR-0027, which keeps the enrolment rules of ADR-0021 and ADR-0017, with ADR-0023, ADR-0025 and ADR-0026.
+Sequence diagrams of the machine identity delivered by increment 0.1: the enrolment token, the first enrolment of an agent, the renewal of its certificate, and the record of the Enrolment service's own server certificate. They detail the use cases "Create an enrolment token" and "Enrol" of the [use cases of V1](../v1/use-cases.md).
 
-The revocation of a machine and the revocation lists are in another page of 0.1, as are the heartbeat and the start-up checks. The re-key of the Agent CA is left out of 0.1: it happens about two years after installation, and how its host commands reach the Enrolment service is an open point of ADR-0027. In these diagrams, the anchor set of the Agent CA holds one anchor, its state outside a re-key.
+They follow ADR-0027, ADR-0030 and ADR-0031, with ADR-0023, ADR-0025, ADR-0026, ADR-0029 and ADR-0032. ADR-0017 and ADR-0021 are superseded, but they are cited **on purpose**: they hold the details that ADR-0027 keeps ("ADR-0021 holds the details"), such as the token lifetime, the renewal at two thirds of the certificate's life and the one-successor rule.
+
+The revocation of a machine and the revocation lists are drawn in another page of 0.1, as are the heartbeat and the start-up checks. The re-key of the Agent CA is left out of 0.1: it happens about two years after installation, and how its host commands reach the Enrolment service is an open point of ADR-0027. In these diagrams, the anchor set of the Agent CA holds one anchor, its state outside a re-key.
 
 The diagrams are written in [Mermaid](https://mermaid.js.org/) (`sequenceDiagram`), which GitHub and Obsidian render in Markdown files; the Mermaid versions they support are **not verified**. Notation:
 
 | Element | Meaning |
 |---|---|
+| actor | a person |
+| number | the step, to be quoted in reviews |
 | solid arrow | a call or a message |
 | dotted arrow | the answer to a call |
 | `alt` / `else` | the cases of a check: the first one is the normal path |
@@ -15,7 +19,12 @@ The diagrams are written in [Mermaid](https://mermaid.js.org/) (`sequenceDiagram
 | `opt` | a step that happens only in the case named |
 | note | a rule that the step applies, with its source |
 
-Every call between two processes of the "app" VM goes over a Unix domain socket, with a deadline (ADR-0004). The VBE (data gateway) is the only process that connects to SQL Server; the API reaches it through its `manage` socket (ADR-0004, ADR-0005).
+Rules that apply to every diagram, and are not repeated in each one:
+
+- Every call between two processes of the "app" VM goes over a Unix domain socket, with a deadline (ADR-0004). The VBE (data gateway) is the only process that connects to SQL Server; the API reaches it through its `manage` socket (ADR-0004, ADR-0005).
+- **A callee that cannot be reached, or a deadline that is exceeded, ends the call with a failure, never with an acceptance.** The failure is logged with its context, and the caller retries only within bounds set in its configuration (CLAUDE.md, section 4). The mapping fails closed (ADR-0027).
+- A token value is never logged, in any process (ADR-0017). A refusal is logged and recorded without it, and the machine always receives the same generic refusal (ADR-0031).
+- A **critical state** (a suspect host, a token presented again, a certificate signed but not registered, and the others of ADR-0032) is logged at critical level and listed by the host command "status" from 0.1, and alerted from 0.2 (ADR-0025, ADR-0032).
 
 ## Create an enrolment token
 
@@ -28,89 +37,102 @@ sequenceDiagram
     participant Host as API, host channel
     participant VBE as VBE (data gateway)
 
-    HostAdmin->>Host: create token (expected HostId, or a new one)
-    Note over HostAdmin,Host: Unix socket owned by root, group of the host administrator, mode 0660 (ADR-0023)
-    Host->>VBE: read the state of the HostId
-    VBE-->>Host: state
-    alt new HostId, or existing host in the revoked state
-        Note over Host: at least 128 bits from RandomNumberGenerator, lifetime set in the configuration, 15 to 60 minutes (ADR-0017)
-        Host->>VBE: store the token's SHA-256 hash, HostId, kind "agent", expiry
-        VBE-->>Host: stored
+    HostAdmin->>Host: create token (an existing HostId, or none for a new host)
+    Note over HostAdmin,Host: Unix domain socket owned by root, group of the host administrator, mode 0660 (ADR-0023)
+    Host->>Host: read the host account of the caller (not verified, ADR-0031)
+    Host->>Host: draw a token of at least 128 bits (RandomNumberGenerator)
+    Host->>VBE: create token: one atomic operation
+    Note over VBE: check the host state, invalidate the earlier unused tokens and the open tickets of the HostId, insert the SHA-256 hash of the token, kind, expiry, record the creation (ADR-0030, ADR-0031)
+    alt new host (never mapped, shown as pending), or revoked
+        VBE-->>Host: token identifier, HostId
         Host-->>HostAdmin: token value, shown once, and its expiry
     else retired host
+        VBE-->>Host: refused
         Host-->>HostAdmin: refused: a retired host comes back under a new HostId (ADR-0026)
     else host not revoked (active, or certificate only expired)
+        VBE-->>Host: refused
         Host-->>HostAdmin: refused: revoke the host first (ADR-0025, ADR-0026)
     end
 ```
 
-- Only the hash of the token is stored, and it is compared in constant time when the token is used (ADR-0017). No role ever sees the value again (ADR-0026).
-- The host commands are audited from 0.2, when the audit trail exists (ADR-0023, ADR-0026). In 0.1, the only record is the issuance register, which records issuances and revocations, not the creation of tokens (ADR-0021).
+- The lifetime of a token is 15 to 60 minutes (ADR-0017); the value is set in the configuration (CLAUDE.md, section 9).
+- The database keeps the hash of the token, never its value. No role ever sees the value again (ADR-0026, ADR-0031).
+- The API draws the `HostId` of a new host (see "Not decided yet").
+- From 0.1, the issuance register records the creation of the token, with the host account that ran the command (ADR-0031). The host commands themselves are audited from 0.2, when the audit trail exists (ADR-0023, ADR-0026).
 - "Monitor" tokens, for the verifier, are created on the same host channel and never in the web site (ADR-0026). The verifier arrives in 0.2 (ADR-0025), so they are drawn with the 0.2 sequences.
 
 ## First enrolment
 
-The host administrator delivers the token out of band and installs the agent from the signed RPM package (ADR-0025). The package carries the two trust anchors, the two DNS names and the enrolment address; no trust material is fetched at enrolment time (ADR-0017).
+The host administrator installs the agent from the signed RPM package (ADR-0025), which carries the Server CA anchor, the Agent CA anchor set, the two DNS names and the enrolment address; no trust material is fetched at enrolment time (ADR-0017, ADR-0027). The host administrator then runs the one-shot enrolment command, as root (ADR-0031).
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor HostAdmin as Host administrator
-    participant Agent
+    participant Cmd as Enrolment command (root)
     participant Crl as Dashboard.Crl
     participant Enrol as Enrolment service
     participant Api as API
     participant VBE as VBE (data gateway)
 
-    HostAdmin->>Agent: token in a file readable by root only, or on standard input
-    Note over HostAdmin,Agent: never on the command line (ADR-0021)
-    Agent->>Agent: read the token, delete the file
-    Agent->>Agent: generate the key pair locally, build the CSR
-    Agent->>Enrol: TLS handshake on the enrolment address
-    Note over Agent,Enrol: server certificate checked against the Agent CA anchor set only, with the expected DNS name (ADR-0027)
-    Agent->>Crl: GET the Agent CA revocation list (HTTP)
-    Crl-->>Agent: signed list
-    break server certificate invalid or revoked, or list missing or expired
-        Agent->>Agent: stop, retry within the bounds set in the configuration, then fail visibly
+    HostAdmin->>Cmd: run, with the token on standard input (a file is the fallback)
+    Note over HostAdmin,Cmd: never on the command line (ADR-0021). A file is opened without following links, and only if it is owned by root with mode 0400 or 0600 (ADR-0031)
+    Cmd->>Cmd: generate the key pair, write the private key readable by the agent's user only, build the CSR
+    Cmd->>Enrol: TLS handshake on the enrolment address
+    Cmd->>Crl: during the handshake: GET the Agent CA revocation list (HTTP, deadline of a few seconds)
+    Crl-->>Cmd: signed list
+    Note over Cmd,Enrol: the server certificate is checked against the Agent CA anchor set only, with the expected DNS name. The list is checked: signature and issuer, nextUpdate, serial of the server certificate (ADR-0017, ADR-0027)
+    break server certificate invalid or revoked, or list missing, invalid or expired
+        Cmd->>Cmd: stop, the token is not sent. Retry within the configured bounds, then fail visibly
     end
-    Agent->>Enrol: enrol(CSR, token)
-    Note over Enrol: unauthenticated endpoint: rate limit per source address, lockout after repeated failures (ADR-0017)
-    Enrol->>Enrol: load the CSR (LoadSigningRequest, default options), check key type and size, cap the CSR size
-    break CSR refused
-        Enrol-->>Agent: refused
+    Cmd->>Enrol: enrol(CSR, token)
+    Cmd->>Cmd: delete the token file, keep the token in memory for the retries (ADR-0031)
+    Note over Enrol: rate limit per source address, bound on the request size, bound in bytes on the CSR, then load the CSR (ADR-0030)
+    break rate limit or a bound exceeded, or CSR refused (signature, key type and size)
+        Enrol-->>Cmd: refused
     end
-    Enrol->>Api: consume token(token, source address)
-    Api->>VBE: check the hash, mark it used, record the issuance: one atomic operation
-    VBE-->>Api: HostId, or refused (unknown, used or expired)
-    break token refused
+    Enrol->>Api: consume token(token, CSR, source address)
+    Api->>Api: load the CSR itself (same policy), hash its public key, hash the token
+    Api->>VBE: consume token: one atomic operation
+    Note over VBE: find by the hash of the token, compare it in constant time, check unused and unexpired, check the host again (new or revoked, no active mapping, no other open ticket), mark used, create the issuance ticket bound to the HostId, the kind and the hash of the public key (ADR-0030, ADR-0031)
+    alt same token and same public key as an earlier consumption
+        VBE-->>Api: the certificate already issued, or a new ticket bound to the same key
+        Note over Api,VBE: a retry after a lost answer, not a refusal (ADR-0031)
+    else token accepted
+        VBE-->>Api: ticket, HostId, kind
+    else token refused (unknown, used, expired, invalidated, host state)
+        VBE-->>Api: refused, recorded with its reason and the source address
+        Note over VBE: a token presented again once used, expired or invalidated is a suspect event, a critical state (ADR-0031, ADR-0032)
         Api-->>Enrol: refused
-        Enrol-->>Agent: refused
+        Enrol-->>Cmd: refused (generic)
     end
-    Api-->>Enrol: HostId
+    Api-->>Enrol: ticket
     Enrol->>Enrol: sign with the active Agent CA: subject from the HostId, never from the CSR, random serial, 30 days
-    Enrol->>Api: register(certificate, CSR)
-    Api->>Api: check: chain to the active Agent CA, public key equal to the CSR's, expected HostId, client-authentication usage, expected validity
+    Enrol->>Api: register(ticket, certificate)
+    Api->>VBE: register: one atomic operation
+    Note over VBE: ticket open and unexpired, public key equal to the one bound in the ticket, host state checked again (not revoked, suspect or retired, no active mapping), then the exact profile: listed extensions only, CA=false, client authentication only, no DNS name, unique serial, SHA-256 or stronger, issuer the active Agent CA, validity (ADR-0030)
     alt certificate accepted
-        Api->>VBE: store the mapping (SHA-256 hash, issuer, serial, HostId), issuance register, use of the token with its source address
-        VBE-->>Api: stored
+        VBE-->>Api: stored: the mapping (SHA-256 hash, issuer, serial, HostId), the issued certificate, the issuance record, the use of the token with its source address
         Api-->>Enrol: registered
-        Enrol-->>Agent: certificate
-        Agent->>Agent: keep the key readable by the agent's user only, and the certificate
+        Enrol-->>Cmd: certificate
+        Cmd->>Cmd: store the certificate, hand the key and the certificate to the agent's user
     else certificate refused
-        Api->>VBE: issuance register: serial refused at registration
+        VBE-->>Api: refused: the serial recorded as refused at registration and revoked, in the same operation (ADR-0030)
         Api-->>Enrol: refused
-        Enrol-->>Agent: refused
+        Enrol-->>Cmd: refused (generic)
     end
 ```
 
-- The token is consumed before the certificate is signed, so it can never be used twice (ADR-0017). If anything fails after this step, the token is lost, and the host administrator creates a new one.
-- A certificate refused by the API is never mapped, so the Collector refuses it: the mapping fails closed (ADR-0027).
-- Each use of a token is shown on the dashboard with the source address of the request (ADR-0025); in 0.1, on the development status page.
-- The Agent CA revocation list served by `Dashboard.Crl` is written by the Enrolment service; the sequence that produces it is drawn with the revocation of a machine.
+- The token is consumed before the certificate is signed, so it can never enrol two machines (ADR-0017, ADR-0031). A retry with the same token and the same key, after a lost answer, gets the certificate already issued, or a new ticket for the same key. If the command stops before it has a certificate, the host is still new (pending), and the host administrator creates a new token for it, which invalidates the open ticket (ADR-0031).
+- If the registration does not succeed (the API cannot be reached, a deadline), the Enrolment service retries within its configured bounds. A ticket that expires with a certificate signed but not registered is a critical state (ADR-0030, ADR-0032). That certificate is never mapped, so the Collector refuses it (ADR-0027).
+- If the command cannot store its certificate, it fails visibly. The certificate stays mapped; the command can retry, and gets the same certificate.
+- An abandoned pending host is revoked, then retired (ADR-0026, ADR-0031).
+- The Agent CA list can be replayed over plain HTTP while it is valid, up to 7 days: it is signed, so it cannot be changed, only replayed (ADR-0021, ADR-0029).
+- **Residual risk** (ADR-0031): the Enrolment service terminates the TLS, so it sees the token. A compromised Enrolment service can consume it with its own key, and enrol one machine per token in place of the real one. The real machine is then refused, which is visible. The source address it passes to the API is its own statement (ADR-0030).
 
 ## Renewal of the agent certificate
 
-The agent renews its certificate at two thirds of its life, that is after 20 of its 30 days (ADR-0017). Renewal requires the current client certificate, and the API verifies the request itself: it never accepts a statement of the Enrolment service as proof (ADR-0017).
+The agent renews its certificate at two thirds of its life, that is after 20 of its 30 days (ADR-0017). Renewal requires the current client certificate, and the API reads the new public key itself, from the request that the agent signed (ADR-0030).
 
 ```mermaid
 sequenceDiagram
@@ -120,86 +142,102 @@ sequenceDiagram
     participant Api as API
     participant VBE as VBE (data gateway)
 
-    Agent->>Agent: generate a new key pair (mandatory at each renewal), build the CSR
+    Agent->>Agent: generate a new key pair, write it durably (written, flushed, renamed), build the CSR (ADR-0030)
+    Note over Agent: if the key cannot be written, the request is not sent
     Agent->>Enrol: mTLS handshake with the current certificate
     Note over Agent,Enrol: each side checks the other against the Agent CA anchor set, with strict revocation (ADR-0027)
     Agent->>Enrol: begin renewal
     Enrol->>Api: request a nonce(hash of the client certificate)
-    Api->>VBE: read the mapping
+    Api->>VBE: read the mapping and the host state
     VBE-->>Api: HostId and state
-    break unknown or revoked
+    break unknown, revoked or suspect
         Api-->>Enrol: refused
         Enrol-->>Agent: refused
     end
-    Api-->>Enrol: nonce, single use, short lifetime
+    Api->>VBE: store a nonce bound to the certificate, single use, lifetime set in the configuration
+    Api-->>Enrol: nonce
     Enrol-->>Agent: nonce
-    Agent->>Enrol: renew(CSR, nonce, HostId), signed with the current private key
-    Enrol->>Enrol: load the CSR (same policy as the first enrolment)
+    Agent->>Enrol: renew(CSR, nonce, HostId, hash of the current certificate), signed with the current private key
+    Note over Enrol: bound on the CSR, then load it (same policy as the first enrolment)
     Enrol->>Api: verify renewal(signed request, hash of the client certificate, source address)
-    Api->>Api: verify the signature with the public key of the mapped certificate, consume the nonce
-    Api->>VBE: read the successors, the identity's age and the last source address
-    VBE-->>Api: history of the certificate
-    alt valid signature, no successor yet, identity younger than 1 year
-        Api-->>Enrol: accepted
-        Enrol->>Enrol: sign with the active Agent CA (same content as the first enrolment)
-        Enrol->>Api: register(certificate, CSR)
-        Api->>Api: same checks as the first enrolment
-        Api->>VBE: store the successor mapping, issuance register, source address
-        VBE-->>Api: stored
-        Api-->>Enrol: registered
-        Enrol-->>Agent: new certificate
-        Agent->>Agent: switch to the new key and certificate
-    else second renewal from the same certificate
-        Api->>VBE: refuse, mark the host suspect
+    Api->>Api: verify the signature with the public key of the mapped certificate, load the CSR itself, hash its public key
+    Api->>VBE: verify renewal: one atomic operation
+    Note over VBE: consume the nonce (whatever the outcome), check the HostId and the host state again, check the identity age, reserve the successor of the certificate under a unique constraint, create the issuance ticket (ADR-0030)
+    alt successor reserved
+        VBE-->>Api: ticket
+    else same new public key as the reserved successor
+        VBE-->>Api: the certificate already issued, or a new ticket bound to the same key
+        Note over Api,VBE: a retry after a lost answer, with a fresh nonce: not a second renewal (ADR-0030)
+    else invalid signature, unknown, used or expired nonce, HostId mismatch, host revoked or suspect
+        VBE-->>Api: refused
+        Api-->>Enrol: refused
+        Enrol-->>Agent: refused
+    else different public key from the same certificate: second renewal
+        VBE-->>Api: refused, host marked suspect
+        Note over VBE: refused at renewal and at the Collector until it is revoked and enrolled again, open tickets invalidated, a critical state (ADR-0030, ADR-0032)
         Api-->>Enrol: refused
         Enrol-->>Agent: refused
     else identity older than 1 year
-        Api-->>Enrol: refused: a new token is required
+        VBE-->>Api: refused: revoke the host and create a new token (ADR-0031)
+        Api-->>Enrol: refused
         Enrol-->>Agent: refused
     end
-    opt the source address changed since the last renewal
-        Api->>VBE: record the change
+    Api-->>Enrol: ticket
+    Enrol->>Enrol: sign with the active Agent CA (same content as the first enrolment)
+    Enrol->>Api: register(ticket, certificate)
+    Api->>VBE: register: one atomic operation
+    Note over VBE: same checks as the first enrolment, and the predecessor still mapped and active (ADR-0030)
+    break certificate refused
+        VBE-->>Api: refused: the serial recorded and revoked, in the same operation
+        Api-->>Enrol: refused
+        Enrol-->>Agent: refused
     end
+    VBE-->>Api: stored: the successor mapping, the issued certificate, the issuance record, the source address
+    opt the source address changed since the last renewal
+        Api->>VBE: record the change (alerted from 0.2, ADR-0017)
+    end
+    Api-->>Enrol: registered
+    Enrol-->>Agent: new certificate
+    Agent->>Agent: switch to the new key and certificate
 ```
 
-- **One successor** per certificate: a second renewal from the same certificate is refused, and the host is marked suspect (ADR-0017).
+- If a renewal fails, the agent retries within bounds set in its configuration. It reports in its heartbeat the days before its certificate expires (ADR-0021), shown on the host page. If the certificate expires (after 30 days), the Collector refuses the host, which is "down: refused": the host administrator revokes it and creates a new token (ADR-0026, ADR-0031).
 - The old certificate is revoked at the end of the overlap (ADR-0017); that step is drawn with the revocation of a machine.
-- ADR-0017 alerts a second renewal and a change of source address. The alert channel arrives in 0.2 (ADR-0025): in 0.1, these events are recorded and shown on the development status page.
+- The end of the 1-year identity is shown in advance on the host page, and a yearly procedure is written in `doc/adm/` (ADR-0031).
 
-## Renewal of the Enrolment service's server certificate
+## Record of the Enrolment service's server certificate
 
-The Enrolment service renews its own server certificate, valid 90 days, itself (ADR-0017). It signs it with the Agent CA, whose key it holds online.
+The Enrolment service renews its own server certificate, valid 90 days (ADR-0017), at a time set in its configuration (ADR-0030). The API records it by reading its public file; nothing is added to the socket between the two services (ADR-0030).
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant Enrol as Enrolment service
+    participant File as Public certificate file
     participant Api as API
     participant VBE as VBE (data gateway)
 
     Enrol->>Enrol: generate a new key pair, sign the new server certificate with the active Agent CA
-    Enrol->>Api: register the server certificate(certificate)
-    Api->>Api: check: chain to the active Agent CA, server-authentication usage, the Enrolment service's DNS name, expected validity
-    alt accepted
-        Api->>VBE: issuance register
+    Enrol->>File: write the public certificate atomically (temporary file, then rename), readable by the API's group, the key kept in a directory that group cannot read
+    Enrol->>Enrol: serve the new certificate on new connections
+    Api->>File: read, when the file changes and at least once a day, after bounding its size
+    Api->>Api: check the profile: server authentication, the DNS name of the Enrolment service, issued by the active Agent CA
+    alt profile valid
+        Api->>VBE: issuance record: serial, hash, expiry
         VBE-->>Api: stored
-        Api-->>Enrol: registered
-        Enrol->>Enrol: serve the new certificate on new connections
-    else refused
-        Api-->>Enrol: refused
-        Enrol->>Enrol: keep the current certificate, fail visibly
+    else file missing, unreadable, too large, invalid, or wrong profile
+        Api->>Api: log an error, state "unknown"
+        Note over Api: its expiry, or failed reads beyond a number set in the configuration, is a critical state (ADR-0030, ADR-0032)
     end
 ```
 
-- Every issuance is recorded (ADR-0017), the Enrolment service's own certificate included; this is what lets the reconciliation of ADR-0017 tell it from an unknown certificate.
+- The API tracks the expiry of this certificate. If it expires, the agents refuse the enrolment channel (strict checks, ADR-0027): no enrolment and no renewal works until it is renewed.
+- **Limit** (ADR-0030): the record holds what the file contains, not what the service serves. A compromised Enrolment service holds the Agent CA key and can serve a certificate it never wrote to the file.
 
-## Proposed by these diagrams, to be decided
+## Not decided yet
 
-The ADRs do not settle the points below; the diagrams draw them as proposed here.
+The ADRs do not settle the points below. The diagrams draw them as written here.
 
-1. **Two calls from the Enrolment service to the API** at enrolment and renewal: one before signing (consume the token, or verify the renewal), one after (register the certificate, with the CSR, so that the API can compare the public keys).
-2. **A certificate refused at registration** is recorded in the issuance register with its serial, so that the reconciliation of ADR-0017 does not report it as unknown. Whether it is also put on the Agent CA revocation list is decided with the revocation sequences.
-3. **The renewal nonce** is requested by a separate first call, is single use, and its lifetime is set in the configuration.
-4. **The agent reads the token, then deletes the file at once**, before the enrolment answer: a failed attempt therefore needs a new token, which a consumed token needs anyway.
-5. **In 0.1, before the alert channel**, the events that ADR-0017 alerts (second renewal, change of source address) are recorded and shown on the development status page.
-6. **The Enrolment service's server certificate** goes through the API's checks and the issuance register like an agent certificate.
+1. **The overlap after a renewal**: how long the old certificate stays valid before it is revoked (ADR-0017 does not define it). To decide with the revocation sequences.
+2. **One listener or two** for the Enrolment service: the enrolment uses server-side TLS, the renewal mutual TLS. Whether Kestrel serves both on one listener with an optional client certificate, or two ports are needed, is **not verified**.
+3. **Who draws a new `HostId`**: the diagrams have the API draw it at the creation of the first token of a new host.
