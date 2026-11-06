@@ -97,4 +97,4 @@ This ADR adds to the ADRs it complements; it changes none of their decisions, bu
 
 - Microsoft Learn, *Editions and supported features of SQL Server 2025*, section "Security" (encryption for backups in Standard) (consulted 2026-11-04).
 - [Second reading report](../reviews/2026-11-04-second-reading.md), findings I5 and I6.
-- ADR-0003, ADR-0004, ADR-0006, ADR-0008, ADR-0012, ADR-0018, ADR-0021, ADR-0023, ADR-0024; ADR-0025 and ADR-0026 complement this ADR; ADR-0026 tightens the reminder of open critical alerts.
+- ADR-0003, ADR-0004, ADR-0006, ADR-0008, ADR-0012, ADR-0018, ADR-0021, ADR-0023, ADR-0024; ADR-0025 and ADR-0026 complement this ADR; ADR-0026 tightens the reminder of open critical alerts; ADR-0032 complements this ADR.

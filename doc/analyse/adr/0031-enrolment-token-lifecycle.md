@@ -16,47 +16,52 @@ An enrolment token is created by the host administrator (ADR-0021) or, from 0.2,
 The team review of the sequence diagrams of 0.1 found that these rules leave gaps:
 
 - several valid tokens can exist for one `HostId`, and consuming a token does not check the host's state again: a second machine could enrol on top of an active certificate, which ADR-0025 and ADR-0026 forbid;
-- a lookup by hash in the database is not a comparison in constant time, and no token identifier distinct from its value and its hash is defined;
-- a `HostId` whose token was consumed but which never received a certificate is neither new nor revoked, so no new token can be created for it;
+- "new `HostId`" is not defined: a `HostId` whose token was consumed but which never received a certificate is neither clearly new nor revoked, so no new token could be created for it;
 - the creation of a token and the refused uses of a token are recorded nowhere, while each issuance record names "the administrator who created the token" (ADR-0017);
 - the agent reads the token from a file readable by root only, but runs as its own user; when the file is deleted is not settled, and a path opened by root can be a symbolic link;
+- an honest retry after a lost answer would find its token already used;
 - the Enrolment service terminates the TLS of the enrolment channel, so it sees each token in clear;
 - the identity lifetime of 1 year requires a new token (ADR-0017), and a token for an existing host requires its revocation first (ADR-0026), which raises a critical alert (ADR-0025).
 
-This ADR adds to the ADRs it complements, and tightens two rules: the storage of the token kept by ADR-0027 from ADR-0017, and the creation of a token for an existing host (ADR-0026). It weakens none; the two points where a reader could see a weakening are argued below.
+This ADR adds to the ADRs it complements. It **tightens** the creation and the consumption of a token (ADR-0026: one live token per host, the host state checked again when the token is used), and **defines** a term that ADR-0025 and ADR-0026 use without defining ("new `HostId`"). It weakens none.
 
 ## Decision
 
-### Token format and storage
+### Storage
 
-- A token is made of a **selector** and a **verifier**, both from `RandomNumberGenerator`, the verifier of at least 128 bits. The agent receives them as one value.
-- The database stores the selector, the SHA-256 hash of the verifier, the `HostId`, the kind (agent; monitor from 0.2), the expiry and the state. The API finds the token by its selector, then compares the hash of the verifier with `CryptographicOperations.FixedTimeEquals`, which makes the comparison in constant time exact.
-- The token **identifier** recorded in the issuance register and the audit trail (ADR-0026) is the row identifier, neither the selector nor any hash.
-- This tightens the storage of ADR-0017 kept by ADR-0027. It does not weaken it: the selector is stored in clear, but it cannot enrol a machine without the verifier, of which only the hash is stored.
+- A token is a value of at least 128 bits from `RandomNumberGenerator` (ADR-0017). The database stores its SHA-256 hash, the `HostId`, the kind (agent; monitor from 0.2), the expiry and the state; never the value.
+- The API looks the token up by its hash, then compares the stored hash with the computed one using `CryptographicOperations.FixedTimeEquals`, so the comparison is in constant time (ADR-0017). The index lookup that precedes it can only reveal the beginning of the hash of a random value of 128 bits, which gives nothing usable.
+- The token **identifier** recorded in the issuance register and the audit trail (ADR-0026) is the row identifier, never the value nor the hash.
 
 ### One live token per `HostId`, checked when it is used
 
-- Creating a token **invalidates every earlier unused token** of the same `HostId`, and the invalidation is recorded.
-- Creating a token is one atomic operation of the data gateway: check the state of the `HostId`, invalidate the earlier tokens, insert the new one.
-- Consuming a token is one atomic operation of the data gateway (ADR-0017), which also checks the state of the host **again**: it is refused unless the host is new, pending or revoked, not retired, and has no active mapping. It returns the `HostId` and the kind.
-- A `HostId` is **pending** from the creation of its first token until its first certificate is mapped. A new token can be created for a pending host. This does not weaken ADR-0026: the risk that its rule prevents, a rogue machine taking the place of a host whose agent stopped, needs a host that held a certificate, which a pending host never did.
+- A **new** `HostId` is one that never had a mapped certificate. Such a host is shown as **pending** from the creation of its first token. A new token can therefore be created for a pending host, as for any new host (ADR-0025, ADR-0026). The risk that ADR-0026 prevents, a rogue machine taking the place of a host whose agent stopped, needs a host that held a certificate, which a new host never did.
+- Creating a token is one atomic operation of the data gateway: check the state of the `HostId`, invalidate every earlier unused token of that `HostId` and its open issuance tickets (ADR-0030), insert the new token, and record its creation.
+- Consuming a token is one atomic operation of the data gateway (ADR-0017), which also checks the state of the host **again**: it is refused unless the host is new or revoked, not retired, has no active mapping and no other open ticket. It returns the `HostId`, the kind and the issuance ticket (ADR-0030).
+- A consumption that comes again with the **same token and the same public key** is a retry: the API answers with the certificate already issued, if any, otherwise with a new ticket bound to the same key, and records no refusal. The same token with a different public key is refused as "used".
+- The host page shows how long a host has been pending; beyond a duration set in the configuration, it is logged. A pending host that is abandoned is revoked (it has no certificate to revoke, but the state change is recorded, and alerted from 0.2 as any revocation, ADR-0025), then retired (ADR-0026).
 
 ### Records
 
-- From **0.1**, the issuance register records the creation of each token: its identifier, the `HostId`, the kind, the expiry and the host account that ran the command. Reading the host account from the peer credentials of the host channel's socket is **not verified** in .NET; if it is not available, the record says "member of the host channel's group". This lets each issuance record name who created its token (ADR-0017).
-- Each **refused** use of a token is recorded with its reason (unknown, used, expired or invalidated, host state) and its source address. As for retired hosts (ADR-0026), the records are aggregated and rate-limited, because the enrolment endpoint is unauthenticated. A token that is **used** again, expired or invalidated, with a known selector, is a suspect event: shown on the development status page in 0.1, alerted from 0.2. An unknown selector is only counted.
+- From **0.1**, the issuance register records the creation of each token: its identifier, the `HostId`, the kind, the expiry and the host account that ran the command. Reading the host account from the peer credentials of the host channel's socket is **not verified** in .NET; if it cannot be read, the token is still created, and the record is marked "host account not read" in a field of its own. This lets each issuance record name who created its token (ADR-0017).
+- Each **refused** use of a token is recorded with its reason (unknown, used, expired or invalidated, host state) and its source address. As for retired hosts (ADR-0026), these records are aggregated and rate-limited, because the enrolment endpoint is unauthenticated; the records dropped by the limit are counted.
+- A token that is presented again once used, expired or invalidated is a **suspect event**: a critical state (ADR-0032), alerted from 0.2. An unknown token is only counted.
+- The machine always receives the same generic refusal, so that the reasons cannot be used to probe the state of a token.
 - The source address comes from the Enrolment service, which can state a false one (ADR-0030).
 
 ### Delivery to the machine
 
-- The machine is enrolled by a **one-shot enrolment command, run as root**. It reads the token from standard input first; a file is the fallback.
-- A token file is opened without following symbolic links, and used only if it is a regular file owned by root with mode `0400` or `0600`, in a directory owned by root that others cannot write. It is read through the open descriptor. .NET reads the mode of an open file (`File.GetUnixFileMode(SafeFileHandle)`, Microsoft Learn, net-10.0); whether it offers an open that does not follow links, and the owner of an open file, is **not verified**. If it does not, the check and the opening are two steps, which leaves a race to be stated in the code.
-- The command generates the key pair and writes the private key, readable by the agent's user only, before it sends the request. The token is kept in its memory only. The token file is **deleted once the token has been sent** to the Enrolment service: before that, a failure (TLS, revocation list) does not cost the token; after it, the token may have been consumed. Retries are bounded by the configuration.
+- The machine is enrolled by a **one-shot enrolment command, run as root**, shipped in the agent package. It reads the token from standard input first, and a file is the fallback; the token is never passed as a command-line argument nor as an environment variable. The procedure in `doc/adm/` has the host administrator type it at a prompt without echo, not through a shell pipe that would leave it in the history.
+- A token file is opened without following symbolic links, and used only if it is a regular file owned by root with mode `0400` or `0600`, in a directory owned by root that others cannot write. It is read through the open descriptor. .NET reads the mode of an open file (`File.GetUnixFileMode(SafeFileHandle)`, Microsoft Learn, net-10.0). Whether it offers an open that does not follow links, and reads the owner of an open file, is **not verified**; if it does not, the check and the opening are two steps, which leaves a race to be stated in the code.
+- The command generates the key pair and writes the private key durably, readable by the agent's user only, before it sends the request. The token is kept in its memory only.
+- The token file is **deleted once the token has been sent** to the Enrolment service: before that, a failure (TLS, revocation list) does not cost the token; after it, the token may have been consumed. This is how the command applies "it deletes the file after use" (ADR-0021). If the file cannot be deleted, the command stops with an error and a clear message.
+- The command retries with the same token and the same key, within bounds set in the configuration; a retry after a lost answer gets the same answer (see above). If the command stops before it has a certificate, the host is still pending, and the host administrator creates a new token for it.
 - Once the certificate is received, the command hands the key and the certificate to the agent's user, and the agent runs under that user.
+- This delivery is the one of the Linux agent. The Windows agent, in 0.4 (ADR-0015), has its delivery decided with it.
 
 ### What a compromised Enrolment service can do at first enrolment
 
-The Enrolment service sees the token in clear. A compromised Enrolment service can consume a token that passes through it with its own key, and so enrol one machine per token in place of the real one. The theft is visible: the real machine is refused, its token is "used", which is a suspect event, and its host stays without a working agent. The issuance ticket of ADR-0030 prevents it from changing the key **after** the token is consumed.
+The Enrolment service sees the token in clear. A compromised Enrolment service can consume a token that passes through it with its own key, and so enrol one machine per token in place of the real one. The theft is visible: the real machine's token is "used", which is a suspect event, and the host has no working agent. The issuance ticket of ADR-0030 prevents it from changing the key **after** the token is consumed.
 
 ### The identity lifetime of 1 year
 
@@ -67,11 +72,12 @@ The Enrolment service sees the token in clear. A compromised Enrolment service c
 
 ## Alternatives considered
 
-- **The agent sends a keyed hash (HMAC) of its CSR under the verifier, so that the Enrolment service never sees the verifier.** Rejected: to check it, the API would need the verifier or a key derived from it, and a read of the database would give a usable credential; that weakens "only its hash is stored".
-- **A lookup by the hash of the whole token.** Rejected: it is not a comparison in constant time.
+- **A token made of a selector, stored in clear, and a verifier, whose hash is stored.** Not adopted: it departs from "only its SHA-256 hash is stored" (ADR-0017), which a complement cannot do; the lookup by hash gives the same protection.
+- **The agent sends a keyed hash (HMAC) of its CSR under a secret part of the token, so that the Enrolment service never sees it.** Rejected: to check it, the API would need that secret or a key derived from it, and a read of the database would give a usable credential.
 - **Several live tokens per `HostId`.** Rejected: a second enrolment could land on an active certificate.
-- **No pending state.** Rejected: an enrolment that failed after the token was consumed would need a new `HostId`.
-- **Deleting the token file as soon as it is read, or after the answer.** Rejected: the first wastes a token on a failure that happens before it is sent; the second turns an honest retry into a "used" suspect event.
+- **No pending state, a new `HostId` after each failed enrolment.** Rejected: it multiplies hosts that never worked.
+- **Retiring an abandoned pending host directly.** Not adopted: ADR-0026 allows retiring only from the revoked state.
+- **Deleting the token file as soon as it is read, or after the answer.** Rejected: the first wastes a token on a failure that happens before it is sent; the second keeps a consumed token on disk for no use.
 - **Removing the 1-year limit.** Not adopted for V1 (see above).
 
 ## Consequences
@@ -84,12 +90,12 @@ The Enrolment service sees the token in clear. A compromised Enrolment service c
 
 ### Negative
 
-- One more state (pending) to test in the mapping and the token rules.
+- One more displayed state (pending) to test in the mapping and the token rules.
 - Each host is revoked and enrolled again once a year, with a critical alert.
 - A compromised Enrolment service can still steal the enrolment of the machines whose tokens pass through it.
 
 ## References
 
-- ADR-0017 (superseded; it holds the details of the token rules), ADR-0021 (superseded), ADR-0022, ADR-0025, ADR-0026, ADR-0027, ADR-0030.
 - Microsoft Learn (net-10.0), consulted on 2026-11-06: `CryptographicOperations.FixedTimeEquals` ("an amount of time that depends on the length of the sequences, but not their values"), `File.GetUnixFileMode(SafeFileHandle)`.
-- The sequence diagrams of the machine identity of 0.1 (`doc/analyse/uml/v0.1/identity.md`).
+- ADR-0015, ADR-0017 (superseded; it holds the details of the token rules), ADR-0021 (superseded), ADR-0025, ADR-0026, ADR-0027, ADR-0030, ADR-0032.
+- [Review report of the 0.1 identity sequences](../reviews/2026-11-06-identity-sequences-of-0.1.md).
