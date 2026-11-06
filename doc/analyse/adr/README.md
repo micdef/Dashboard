@@ -20,7 +20,7 @@ This folder holds the Architecture Decision Records (ADR) of the Dashboard proje
 | Superseded by ADR-NNNN | Replaced by a later ADR (linked). |
 | Deprecated | No longer applies, without a replacement. |
 
-Open points marked "raised in review" were added after the team review of 2026-11-03; every one of them was decided on 2026-11-04. A second team review took place on 2026-11-04, after the decisions ([report](../reviews/2026-11-04-second-reading.md)), and a third one on 2026-11-05 on the ADRs that came out of it ([report](../reviews/2026-11-05-third-reading.md)). ADR-0026 and ADR-0027 come from the review of 2026-11-06 ([report](../reviews/2026-11-06-roles-and-anchor-sets.md)). ADR-0028 to ADR-0031 come from the sequence diagrams of 0.1 and their team review, which found points that no ADR settled.
+Open points marked "raised in review" were added after the team review of 2026-11-03; every one of them was decided on 2026-11-04. A second team review took place on 2026-11-04, after the decisions ([report](../reviews/2026-11-04-second-reading.md)), and a third one on 2026-11-05 on the ADRs that came out of it ([report](../reviews/2026-11-05-third-reading.md)). ADR-0026 and ADR-0027 come from the review of 2026-11-06 ([report](../reviews/2026-11-06-roles-and-anchor-sets.md)). ADR-0028 to ADR-0032 come from the sequence diagrams of the machine identity of 0.1 and their team review ([report](../reviews/2026-11-06-identity-sequences-of-0.1.md)), which found points that no ADR settled.
 
 ## Vocabulary
 
@@ -63,5 +63,6 @@ Open points marked "raised in review" were added after the team review of 2026-1
 | [0027](0027-machine-identity-with-agent-ca-anchor-sets.md) | Machine identity with Agent CA anchor sets and a complete re-key | Accepted | 2026-11-06 |
 | [0028](0028-heartbeat-as-a-unary-call.md) | Heartbeat as a unary call, separate from the command stream | Accepted | 2026-11-06 |
 | [0029](0029-identity-resolution-and-revocation-propagation.md) | Identity resolution on the agent channel, and how revocations propagate | Accepted | 2026-11-06 |
-| [0030](0030-certificate-issuance-bound-by-the-api.md) | Certificate issuance bound by the API | Accepted | 2026-11-06 |
+| [0030](0030-certificate-issuance-bound-by-the-api.md) | Certificate issuance bound by the API, and its records | Accepted | 2026-11-06 |
 | [0031](0031-enrolment-token-lifecycle.md) | Enrolment token lifecycle | Accepted | 2026-11-06 |
+| [0032](0032-critical-states-visible-on-the-host-in-0.1.md) | Critical states visible on the host from 0.1 | Accepted | 2026-11-06 |
