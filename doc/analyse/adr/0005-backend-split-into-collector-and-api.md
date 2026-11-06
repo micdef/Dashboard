@@ -55,4 +55,4 @@ The first draft of this ADR proposed one process with two endpoints. The product
 
 ## References
 
-- ADR-0004, ADR-0006, ADR-0009, ADR-0024, ADR-0023, ADR-0021.
+- ADR-0004, ADR-0006, ADR-0009, ADR-0024, ADR-0023, ADR-0021; ADR-0029 complements this ADR.
