@@ -1,6 +1,6 @@
 # Dependencies and version floors
 
-Minimum versions of the platforms and components named in the ADRs. The rule is set in ADR-0021: follow the latest patch, and never go below the floor listed here. This page is checked again by the CVE audit before each release; "no known vulnerability" only means none known on the date of the check.
+Minimum versions of the platforms and components named in the ADRs. The rule is set in ADR-0027: follow the latest patch, and never go below the floor listed here. This page is checked again by the CVE audit before each release; "no known vulnerability" only means none known on the date of the check.
 
 Last check: 2026-11-05 (CVE audit of the third reading); .NET release metadata re-checked by the main developer on 2026-11-05.
 

@@ -6,7 +6,8 @@ This folder holds the Architecture Decision Records (ADR) of the Dashboard proje
 
 - One decision per file, named `NNNN-short-title.md`, numbered in creation order. Numbers are never reused.
 - An ADR is written in English by the main developer, validated by the product owner (who decides), then reviewed for format and accuracy.
-- An accepted ADR is never rewritten to change the decision. A new ADR supersedes it, and both files reference each other. (Single exception, before the repository was published: ADR-0001 and ADR-0004 were amended on the day of their acceptance to follow ADR-0005. The rule applies without exception from then on.) Fixing a cross-reference or a name in an accepted ADR, without changing its decision, is an editorial correction and is allowed.
+- An accepted ADR is never rewritten to change the decision. A new ADR supersedes it, and both files reference each other. (Single exception, before the repository was published: ADR-0001 and ADR-0004 were amended on the day of their acceptance to follow ADR-0005. The rule applies without exception from then on.) Fixing a cross-reference or a name in an accepted ADR, without changing its decision, is an editorial correction and is allowed. A reference to a superseded ADR, in another ADR, is read as a reference to the last ADR of its chain of replacement (for instance ADR-0017 → ADR-0021 → ADR-0027), unless the text names the superseded ADR on purpose (its history, a quotation, or "holds the details"); the references, including the `Complements` fields, are not rewritten.
+- A complement may **tighten** a rule of an accepted ADR, if it says so and names the rule; the tightened ADR then gets a reference "tightened by ADR-NNNN", as an editorial correction. A complement never weakens a rule: weakening needs an ADR that supersedes.
 - Every statement must be exact. A claim that could not be checked is marked **not verified**.
 
 ## Statuses
@@ -19,7 +20,7 @@ This folder holds the Architecture Decision Records (ADR) of the Dashboard proje
 | Superseded by ADR-NNNN | Replaced by a later ADR (linked). |
 | Deprecated | No longer applies, without a replacement. |
 
-Open points marked "raised in review" were added after the team review of 2026-11-03; every one of them was decided on 2026-11-04. A second team review took place on 2026-11-04, after the decisions ([report](../reviews/2026-11-04-second-reading.md)), and a third one on 2026-11-05 on the ADRs that came out of it ([report](../reviews/2026-11-05-third-reading.md)).
+Open points marked "raised in review" were added after the team review of 2026-11-03; every one of them was decided on 2026-11-04. A second team review took place on 2026-11-04, after the decisions ([report](../reviews/2026-11-04-second-reading.md)), and a third one on 2026-11-05 on the ADRs that came out of it ([report](../reviews/2026-11-05-third-reading.md)). ADR-0026 and ADR-0027 come from the review of 2026-11-06 ([report](../reviews/2026-11-06-roles-and-anchor-sets.md)).
 
 ## Vocabulary
 
@@ -53,8 +54,10 @@ Open points marked "raised in review" were added after the team review of 2026-1
 | [0018](0018-cold-storage-any-smb3-file-server.md) | Cold storage on any SMB 3 file server, mounted by the operating system | Accepted | 2026-11-04 |
 | [0019](0019-web-authentication-verified-by-the-api.md) | Web authentication verified by the API, with step-up for sensitive actions | Superseded by ADR-0023 | 2026-11-05 |
 | [0020](0020-remote-commands-and-keyed-audit-trail.md) | Remote commands, and a keyed audit trail that cannot be purged early | Superseded by ADR-0024 | 2026-11-05 |
-| [0021](0021-machine-identity-from-the-first-increment.md) | Machine identity from the first increment, with a dedicated revocation list service | Accepted | 2026-11-05 |
+| [0021](0021-machine-identity-from-the-first-increment.md) | Machine identity from the first increment, with a dedicated revocation list service | Superseded by ADR-0027 | 2026-11-05 |
 | [0022](0022-operations-alerts-backups-and-reconciliation.md) | Operations: alerts, monitoring of the monitor, backups and reconciliation | Accepted | 2026-11-05 |
 | [0023](0023-web-sessions-issued-by-the-api.md) | Web sessions issued by the API, and a host channel for security settings | Accepted | 2026-11-05 |
 | [0024](0024-audit-trail-anchored-by-the-verifier.md) | Audit trail written by the data gateway and anchored by the independent verifier | Accepted | 2026-11-05 |
 | [0025](0025-enrolment-updates-alerts-and-links.md) | Enrolment safeguards, signed agent updates, protected alerts and the added links | Accepted | 2026-11-05 |
+| [0026](0026-roles-rights-and-channels.md) | Roles, rights and channels | Accepted | 2026-11-06 |
+| [0027](0027-machine-identity-with-agent-ca-anchor-sets.md) | Machine identity with Agent CA anchor sets and a complete re-key | Accepted | 2026-11-06 |
