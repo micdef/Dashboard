@@ -20,10 +20,11 @@ The use case diagrams of V1 ([use cases](../uml/v1/use-cases.md)) showed actions
 - ADR-0025 enrols the verifier with a "monitor" token, without saying who creates it.
 - ADR-0019 lets each user set up their own second factor, but the step-up list of ADR-0023 does not cover changing it, nor regenerating the recovery codes, so a stolen session could take over the account.
 - The list of keys to back up offline in ADR-0022 misses the Agent CA key, the package signing keys and the recorded head of the audit chain, and nothing detects a missed or outdated backup.
+- ADR-0025 accepts an enrolment token for a host "without an active certificate", which includes a host whose certificate has only expired: a rogue machine could take the place of a host whose agent was stopped, without revocation and without alert.
 
 The anchor sets and the re-key of the Agent CA, first drafted here, change a rule of ADR-0021 and are decided in ADR-0027, which supersedes it.
 
-This ADR adds rules to the ADRs it complements. Where it extends a rule, it says so.
+This ADR adds rules to the ADRs it complements. Where it extends or tightens a rule, it says so; it never weakens one.
 
 ## Decision
 
@@ -45,14 +46,15 @@ The roles stay **Reader**, **Operator** and **Admin**, each one with every right
 | Retire a revoked host | — | — | yes | yes, single use |
 | Raise a security setting or the audit retention | — | — | yes | yes |
 
-- **What no role sees**: the value of an enrolment token after it was shown once at its creation, the sessions of other users, and the stored secrets of ADR-0023. The audit trail records the identifier of a token or a session, never its value nor its hash.
+- **What no role sees**: the value of an enrolment token after it was shown once at its creation, the sessions of other users, and the stored secrets of ADR-0023 (password hashes, authenticator keys, recovery code hashes, session hashes). The audit trail records the identifier of a token or a session, never its value nor its hash.
 - **The audit trail is visible to every role** (the product owner's choice). It holds user names and source addresses: the legal basis document of the project, to be written before V1 (ADR-0012), must cover this visibility.
-- **Step-up list**: compared with ADR-0023, this table adds changing one's own second factor and regenerating one's own recovery codes; "deleting a host" becomes "retiring a host" (a host is never deleted); revoking a machine and retiring a host need a **single-use** proof, like commands, so that a compromised web site cannot revoke the whole fleet with one proof.
+- **Step-up list**: compared with ADR-0023, this table adds changing one's own second factor and regenerating one's own recovery codes; "deleting a host" becomes "retiring a host" (a host is never deleted); revoking a machine and retiring a host need a **single-use** proof, like commands, so that a compromised web site cannot revoke the whole fleet with one proof. This tightens the 5-minute proof of ADR-0023 for these two actions.
 - **Monitor identities** are never revoked from the web site: see "Host channel".
 
 ### Second factor
 
-- A recovery code is not accepted as a step-up proof, except to set up a new second factor after losing the old one; that use raises a critical alert.
+- A recovery code is not accepted as a step-up proof, except to set up a new second factor after losing the old one; that use raises a critical alert, and the remaining recovery codes are invalidated.
+- On an Operator or Admin account, regenerating the recovery codes and signing in with a recovery code each raise a critical alert.
 - An Admin cannot reset their own second factor.
 - Adding or replacing a second factor on an Operator or Admin account raises a critical alert, like removing one (ADR-0025).
 - Under the policy "required for Operator and Admin" (ADR-0019, kept by ADR-0023), an Operator or Admin account without a second factor, after a change of policy or a reset, must set one up at its next sign-in, and removing it is refused. This replaces, for these accounts, the warning of ADR-0019.
@@ -67,16 +69,18 @@ The roles stay **Reader**, **Operator** and **Admin**, each one with every right
 ### Alerts: acknowledge and silence
 
 - **Acknowledging** an alert records that someone is handling it. It changes nothing but the display: the alert stays open, its notifications are not stopped, and the acknowledgement is audited. Acknowledging the "audit incident" alert in the web site does not lift the block of ADR-0024: only the host command does.
-- An acknowledged critical alert that is still open is **notified again** at an interval set in the host's configuration file, which the web site cannot change.
-- **Silencing** stops the notifications of one alert instance, of level Warning, for a duration. The maximum duration and the maximum number of renewals are read from the host's configuration file, not from a setting of the web site. The dashboard shows "silenced until T by X". When the silence ends and the alert is still open, it is notified again; its resolution is always notified.
+- Every critical alert that is still open, acknowledged or not, is **notified again** at an interval set in the host's configuration file, which the web site cannot change. The dashboard shows the age of each open alert. This replaces, for critical alerts, the rule of ADR-0022 that an open alert is not sent again.
+- **Silencing** stops the notifications of one alert instance, of level Warning, for a duration. The maximum duration and the maximum number of renewals are read from the host's configuration file, not from a setting of the web site. The dashboard shows "silenced until T by X". A renewal beyond the maximum is refused with a visible reason. When the silence ends and the alert is still open, it is notified again; its resolution is always notified.
 - **No critical alert can be silenced from the web site**, whether it is in the list of ADR-0025 or not: this extends the rule of ADR-0025. Information alerts are shown on the dashboard only (ADR-0022), so there is nothing to silence.
-- Creating or revoking a monitor identity raises a critical alert (added to the list of ADR-0025).
+- Creating or revoking a monitor identity raises a critical alert. The critical alerts that this ADR and ADR-0027 add are part of the list of ADR-0025.
+- The values that these rules read from the configuration (rate limit of AI reports, reminder interval, silence limits, interval of the audit head backup, and the limits of ADR-0027) have no default: if one is missing or invalid, the service refuses to start, with a clear message.
 
 ### Retiring a host
 
 - A host is never deleted. **Retiring** a host is allowed only when it is in the **revoked** state, recorded by an explicit revocation (ADR-0025). A host whose certificate has only expired cannot be retired before it is revoked.
-- A retired host is no longer expected: its silence raises no alert. A connection attempt from a retired host is shown and raises a Warning alert.
+- A retired host is no longer expected: its silence raises no alert. The Collector records every refused connection attempt with the identity of the certificate presented; an attempt from a retired host is shown and raises a **critical** alert, since a revoked and retired host that tries to connect is a sign of compromise.
 - No enrolment token can be created for a retired host. A machine that comes back is enrolled under a new `HostId`.
+- For an existing host, an enrolment token can be created only when the host is in the revoked state. A host whose certificate has only expired must be revoked first. This tightens ADR-0025, which accepts any host "without an active certificate".
 - Its data stays and follows the retention rules of ADR-0012 and ADR-0024.
 
 ### Host channel
@@ -99,7 +103,12 @@ The host channel of ADR-0023 also carries the creation and revocation of **"moni
   | Code signing certificate of the MSI packages, and the key of the internal CA that issues it if it is internal | 0.4 |
 
 - The Data Protection key ring of the web site is not backed up (ADR-0023). The verifier's copy of the HMAC key is a copy, not a separate key.
-- **Key backup register**: for each key or secret of the list, the register records its fingerprint, the date it was created and the date of its last offline backup. The key holder records each backup with a host command, which is audited. The dashboard shows the age of each backup. A Warning alert is raised when a key has no backup, when its fingerprint differs from the backed-up one (a key was replaced), or when the backup of the recorded head of the audit chain is older than the interval set in the configuration. The register exists from 0.1; its alerts start with the alert channel, in 0.2.
+- **Key backup register**:
+  - Contents: for each key or secret of the list, an identifier, the date it was created, the date of its last offline backup, and a state (active or destroyed). For an asymmetric key, the identifier is the fingerprint of its public key. For a symmetric key, a secret or a password, it is a version identifier, never a hash of the value. Each service computes the identifier of its own keys, so that no process reads every key.
+  - Use: the key holder records each backup, and each destruction, with a host command. The dashboard shows the age of each backup.
+  - Alerts: a Warning is raised when an active key has no backup, when its identifier differs from the backed-up one (a key was replaced), or when the backup of the recorded head of the audit chain is older than the interval set in the configuration. A destroyed key raises no alert.
+  - Timing: the register exists from 0.1; the host commands are audited, and its alerts raised, from 0.2, when the audit trail and the alert channel exist.
+  - Limit: the register proves that a backup was recorded, not that it exists or can be restored.
 - Each key is backed up in the increment that creates it, and again whenever it is replaced.
 
 ## Alternatives considered
@@ -122,7 +131,7 @@ The host channel of ADR-0023 also carries the creation and revocation of **"moni
 
 - Every action of the web site and the host channel has a role and a channel, in one table, which the authorisation tests can follow line by line.
 - No critical alert can be cut from the web site, an acknowledged one keeps coming back until it is resolved, and the verifier's identity cannot be replaced from the web site.
-- A stolen session cannot take over its user's second factor or recovery codes without the password and the current code, and a takeover attempt on an Operator or Admin raises a critical alert.
+- A stolen session cannot take over its user's second factor or recovery codes without the password and the current code, or a recovery code, whose use raises a critical alert; on an Operator or Admin account, every change of the second factor or of the recovery codes raises a critical alert.
 - A host can leave the fleet without breaking the audit trail or the history, and without hiding a compromise.
 - A missed key backup is visible, before the key is needed.
 

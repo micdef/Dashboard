@@ -52,3 +52,23 @@ The product owner decided the nine points on 2026-11-06, mostly as recommended b
 ### Not verified
 
 - That `X509ChainPolicy.CustomTrustStore` accepts several independent roots, on Linux and Windows, and Kestrel's behaviour on its own (Cassian, Ackbar): Microsoft Learn documents a collection, nothing more. ADR-0027 requires a test at the start of 0.1.
+
+## 3. Second reading of ADR-0026 and ADR-0027
+
+All findings of the first review were fixed or decided. The second reading (Jocasta Nu, Ackbar, Boba Fett, C-3PO, Cassian) found no blocking point, and new important points:
+
+| Finding | Outcome |
+|---|---|
+| ADR-0027 kept the decisions of ADR-0021 without listing them, so pages cited ADR-0027 for rules it did not contain (Jocasta Nu, C-3PO, Cassian) | a "Kept from ADR-0021" section, as ADR-0021 did for ADR-0017 |
+| About twenty references to ADR-0021 in accepted ADRs, without "superseded" (Jocasta Nu) | product owner: one rule in the ADR index, "a reference to a superseded ADR is read as a reference to the ADR that supersedes it" |
+| Only acknowledged critical alerts were notified again (Boba Fett) | product owner: every open critical alert is notified again; its age is shown |
+| The start-up check of the anchor set refused only the Server CA (Ackbar) | product owner: one or two anchors, self-signed CAs, known Agent CAs only, no retired CA; a bounded overlap, alerted |
+| Regenerating recovery codes raised no alert (Ackbar) | product owner: critical alerts for regeneration and sign-in by recovery code on Operator and Admin accounts; remaining codes invalidated after a lost-factor reset |
+| A retired host that tries to connect raised only a Warning, which an Operator can silence (Ackbar) | product owner: a critical alert |
+| ADR-0025 accepted a token for a host whose certificate had only expired (Ackbar, a defect older than this review) | product owner: fixed in ADR-0026, a token for an existing host needs the revoked state |
+| "Nothing can still sign for the old CA" was false: agents keep the old anchor until the next package, and older VM images hold the key (Ackbar) | product owner: sentence corrected, the coverage report follows the removal of the old anchor, older images stay encrypted and are destroyed at the end of their retention |
+| Configuration values without a stated behaviour when missing (Boba Fett) | no default: the service refuses to start (rule of CLAUDE.md, section 4) |
+| Key register: hashes of low-entropy secrets, no "destroyed" state, self-declared (Ackbar, Boba Fett) | public key fingerprint or version identifier, never a hash; a "destroyed" state; the limit stated |
+| Revoked hosts blocked the retirement of the old CA; coverage self-reported (Boba Fett) | revoked hosts are out of the report, the check uses fresh data, the limit stated |
+| The backup guide did not list the new keys (Ackbar) | `doc/adm/backup-and-recovery.md` updated |
+| Accuracy and language (C-3PO, Jocasta Nu) | fixed: the Operator row, the tightening of ADR-0023 stated, the stored secrets named, the register paragraph split |

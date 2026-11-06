@@ -6,7 +6,7 @@ This folder holds the Architecture Decision Records (ADR) of the Dashboard proje
 
 - One decision per file, named `NNNN-short-title.md`, numbered in creation order. Numbers are never reused.
 - An ADR is written in English by the main developer, validated by the product owner (who decides), then reviewed for format and accuracy.
-- An accepted ADR is never rewritten to change the decision. A new ADR supersedes it, and both files reference each other. (Single exception, before the repository was published: ADR-0001 and ADR-0004 were amended on the day of their acceptance to follow ADR-0005. The rule applies without exception from then on.) Fixing a cross-reference or a name in an accepted ADR, without changing its decision, is an editorial correction and is allowed.
+- An accepted ADR is never rewritten to change the decision. A new ADR supersedes it, and both files reference each other. (Single exception, before the repository was published: ADR-0001 and ADR-0004 were amended on the day of their acceptance to follow ADR-0005. The rule applies without exception from then on.) Fixing a cross-reference or a name in an accepted ADR, without changing its decision, is an editorial correction and is allowed. A reference to a superseded ADR, in another ADR, is read as a reference to the ADR that supersedes it; the references are not rewritten.
 - Every statement must be exact. A claim that could not be checked is marked **not verified**.
 
 ## Statuses
