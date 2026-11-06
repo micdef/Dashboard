@@ -58,3 +58,4 @@ Open points marked "raised in review" were added after the team review of 2026-1
 | [0023](0023-web-sessions-issued-by-the-api.md) | Web sessions issued by the API, and a host channel for security settings | Accepted | 2026-11-05 |
 | [0024](0024-audit-trail-anchored-by-the-verifier.md) | Audit trail written by the data gateway and anchored by the independent verifier | Accepted | 2026-11-05 |
 | [0025](0025-enrolment-updates-alerts-and-links.md) | Enrolment safeguards, signed agent updates, protected alerts and the added links | Accepted | 2026-11-05 |
+| [0026](0026-roles-rights-and-channels.md) | Roles, rights and channels | Accepted | 2026-11-06 |
