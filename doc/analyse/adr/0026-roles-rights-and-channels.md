@@ -147,6 +147,6 @@ The host channel of ADR-0023 also carries the creation and revocation of **"moni
 
 ## References
 
-- ADR-0010, ADR-0012, ADR-0014 (superseded), ADR-0019 (superseded), ADR-0022, ADR-0023, ADR-0024, ADR-0025, ADR-0027.
+- ADR-0010, ADR-0012, ADR-0014 (superseded), ADR-0019 (superseded), ADR-0022, ADR-0023, ADR-0024, ADR-0025, ADR-0027; ADR-0031 complements this ADR, and tightens the creation of a token for an existing host.
 - [Use cases of V1](../uml/v1/use-cases.md), section "Decided on 2026-11-06".
 - [Review report of 2026-11-06](../reviews/2026-11-06-roles-and-anchor-sets.md).
