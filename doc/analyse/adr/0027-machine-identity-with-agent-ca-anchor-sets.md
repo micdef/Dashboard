@@ -103,4 +103,4 @@ The list below is a reminder of the main points, not a complete list: every deci
 - All references of ADR-0021.
 - Microsoft Learn, `X509ChainPolicy.CustomTrustStore`, `X509ChainTrustMode` (net-10.0), `CertificateAuthenticationOptions.CustomTrustStore`, and *Configure certificate authentication in ASP.NET Core* (aspnetcore-10.0), consulted by the review on 2026-11-06.
 - [Review report of 2026-11-06](../reviews/2026-11-06-roles-and-anchor-sets.md).
-- ADR-0017 (superseded), ADR-0021 (superseded), ADR-0023, ADR-0025, ADR-0026.
+- ADR-0017 (superseded), ADR-0021 (superseded), ADR-0023, ADR-0025, ADR-0026; ADR-0029 complements this ADR, and tightens the closing of the open streams of a revoked machine; ADR-0030 complements this ADR, tightens the check of the issued certificate, its profile, the one-successor rule and the CSR policy, and defines the effect of a suspect host; ADR-0031 complements this ADR.

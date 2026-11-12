@@ -68,4 +68,4 @@ ADR-0021 later adds two links that follow the rules of this ADR: agent → Enrol
 
 - Microsoft Learn, *Inter-process communication with gRPC* and *Inter-process communication with gRPC and Unix domain sockets* (consulted 2026-11-03).
 - Microsoft Learn, *Security considerations for Kestrel* (Unix socket permissions, consulted by the security review, 2026-11-03).
-- ADR-0003, ADR-0005, ADR-0006, ADR-0009, ADR-0012, ADR-0016, ADR-0021, ADR-0023, ADR-0024; ADR-0022 and ADR-0025 complement this ADR.
+- ADR-0003, ADR-0005, ADR-0006, ADR-0009, ADR-0012, ADR-0016, ADR-0021, ADR-0023, ADR-0024; ADR-0022, ADR-0025 and ADR-0028 complement this ADR.

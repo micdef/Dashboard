@@ -112,4 +112,4 @@ This ADR adds to the ADRs it complements. It adds network links to ADR-0004 and 
 ## References
 
 - [Third reading report](../reviews/2026-11-05-third-reading.md), findings T-I4 to T-I6, T-I8, T-M4, T-M5, and J-I2, J-I4, J-I6, J-I7.
-- ADR-0004, ADR-0015, ADR-0016, ADR-0018, ADR-0021, ADR-0022, ADR-0023, ADR-0024; ADR-0026 complements this ADR, and tightens the creation of a token for an existing host.
+- ADR-0004, ADR-0015, ADR-0016, ADR-0018, ADR-0021, ADR-0022, ADR-0023, ADR-0024; ADR-0026 complements this ADR, and tightens the creation of a token for an existing host; ADR-0029, ADR-0031 and ADR-0032 complement this ADR; ADR-0031 defines a new `HostId`.

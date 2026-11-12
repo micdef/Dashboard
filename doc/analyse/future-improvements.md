@@ -6,6 +6,8 @@ Possible improvements identified during design and deliberately left out of V1. 
 |---|---|---|
 | Port the database to PostgreSQL or Oracle | Run Dashboard on another database engine (V2 or later). | See below. |
 | Asymmetric signature of the audit exports, and key rotation | The verifier holds a copy of the HMAC key, so a compromised verifier machine could forge rows it would itself accept (ADR-0024). | See below. |
+| Yearly re-enrolment without a revocation | The identity lifetime of 1 year (ADR-0017, kept by ADR-0027) forces a revocation and a new token for every host once a year, with a critical alert (ADR-0031). Acceptable for a small fleet, not for a large one. | Remove the limit, or add an exception for identity expiry: both need an ADR that supersedes ADR-0026 or ADR-0027. |
+| Read-only channel for the host command "status" | In V1, "status" is on the host channel, whose group holds every host right, so a timer runs it as root (ADR-0032). A monitor that is not root would need a channel of its own. | A separate socket with its own group, serving only "status", with its own tests, and a link added to ADR-0004. |
 | Single-use step-up proof for every sensitive action | V1 makes the proof single use for commands and account changes only; the other actions keep a 5-minute proof (ADR-0023). | Extend the single-use rule when the list of actions is final. |
 
 ## Port the database to PostgreSQL or Oracle
