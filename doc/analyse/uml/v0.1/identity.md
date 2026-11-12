@@ -42,8 +42,8 @@ sequenceDiagram
     Host->>Host: read the host account of the caller (not verified, ADR-0031)
     Host->>Host: draw a token of at least 128 bits (RandomNumberGenerator)
     Host->>VBE: create token: one atomic operation
-    Note over VBE: check the host state, invalidate the earlier unused tokens and the open tickets of the HostId, insert the SHA-256 hash of the token, kind, expiry, record the creation (ADR-0030, ADR-0031)
-    alt new host (never mapped, shown as pending), or revoked
+    Note over VBE: check the host state, invalidate every earlier token of the HostId (used or not, with its right to a retry) and its open tickets, insert the SHA-256 hash of the token, kind, expiry, record the creation (ADR-0030, ADR-0031)
+    alt new host (never mapped and not retired, shown as pending), or revoked
         VBE-->>Host: token identifier, HostId
         Host-->>HostAdmin: token value, shown once, and its expiry
     else retired host
@@ -77,7 +77,7 @@ sequenceDiagram
 
     HostAdmin->>Cmd: run, with the token on standard input (a file is the fallback)
     Note over HostAdmin,Cmd: never on the command line (ADR-0021). A file is opened without following links, and only if it is owned by root with mode 0400 or 0600 (ADR-0031)
-    Cmd->>Cmd: generate the key pair, write the private key readable by the agent's user only, build the CSR
+    Cmd->>Cmd: generate the key pair (or reuse the key of an earlier run with the same token), write it durably, readable by the agent's user only, build the CSR (ADR-0031)
     Cmd->>Enrol: TLS handshake on the enrolment address
     Cmd->>Crl: during the handshake: GET the Agent CA revocation list (HTTP, deadline of a few seconds)
     Crl-->>Cmd: signed list
@@ -94,25 +94,25 @@ sequenceDiagram
     Enrol->>Api: consume token(token, CSR, source address)
     Api->>Api: load the CSR itself (same policy), hash its public key, hash the token
     Api->>VBE: consume token: one atomic operation
-    Note over VBE: find by the hash of the token, compare it in constant time, check unused and unexpired, check the host again (new or revoked, no active mapping, no other open ticket), mark used, create the issuance ticket bound to the HostId, the kind and the hash of the public key (ADR-0030, ADR-0031)
-    alt same token and same public key as an earlier consumption
-        VBE-->>Api: the certificate already issued, or a new ticket bound to the same key
+    Note over VBE: find by the hash of the token, compare it in constant time. First, is it a retry? Otherwise: check unused and unexpired, check the host again (new or revoked, not retired, no active mapping, no open ticket), mark used, create the issuance ticket bound to the HostId, the kind and the hash of the public key (ADR-0030, ADR-0031)
+    alt retry: same token, same public key, token unexpired and still the latest of the host
+        VBE-->>Api: the certificate already registered, or a new ticket bound to the same key (the earlier one invalidated)
         Note over Api,VBE: a retry after a lost answer, not a refusal (ADR-0031)
     else token accepted
         VBE-->>Api: ticket, HostId, kind
-    else token refused (unknown, used, expired, invalidated, host state)
+    else token refused (unknown, used, expired, invalidated, no longer the latest, host state)
         VBE-->>Api: refused, recorded with its reason and the source address
         Note over VBE: a token presented again once used, expired or invalidated is a suspect event, a critical state (ADR-0031, ADR-0032)
         Api-->>Enrol: refused
         Enrol-->>Cmd: refused (generic)
     end
-    Api-->>Enrol: ticket
+    Api-->>Enrol: ticket and its expiry
     Enrol->>Enrol: sign with the active Agent CA: subject from the HostId, never from the CSR, random serial, 30 days
     Enrol->>Api: register(ticket, certificate)
     Api->>VBE: register: one atomic operation
-    Note over VBE: ticket open and unexpired, public key equal to the one bound in the ticket, host state checked again (not revoked, suspect or retired, no active mapping), then the exact profile: listed extensions only, CA=false, client authentication only, no DNS name, unique serial, SHA-256 or stronger, issuer the active Agent CA, validity (ADR-0030)
+    Note over VBE: ticket open and unexpired, public key equal to the one bound in the ticket, host state checked again (not retired, no active mapping, the token of the ticket still the latest of the host; a revoked host is accepted, it is the way back), then the exact profile: listed extensions only, CA=false, client authentication only, no DNS name, unique serial, SHA-256 or stronger, issuer the active Agent CA, validity (ADR-0030)
     alt certificate accepted
-        VBE-->>Api: stored: the mapping (SHA-256 hash, issuer, serial, HostId), the issued certificate, the issuance record, the use of the token with its source address
+        VBE-->>Api: stored: the mapping (SHA-256 hash, issuer, serial, HostId), the issued certificate, the issuance record, the use of the token with its source address. The host is active, its suspect mark lifted if any
         Api-->>Enrol: registered
         Enrol-->>Cmd: certificate
         Cmd->>Cmd: store the certificate, hand the key and the certificate to the agent's user
@@ -123,10 +123,11 @@ sequenceDiagram
     end
 ```
 
-- The token is consumed before the certificate is signed, so it can never enrol two machines (ADR-0017, ADR-0031). A retry with the same token and the same key, after a lost answer, gets the certificate already issued, or a new ticket for the same key. If the command stops before it has a certificate, the host is still new (pending), and the host administrator creates a new token for it, which invalidates the open ticket (ADR-0031).
-- If the registration does not succeed (the API cannot be reached, a deadline), the Enrolment service retries within its configured bounds. A ticket that expires with a certificate signed but not registered is a critical state (ADR-0030, ADR-0032). That certificate is never mapped, so the Collector refuses it (ADR-0027).
+- The token is consumed before the certificate is signed, so it can never enrol two machines (ADR-0017, ADR-0031). A retry with the same token and the same key, after a lost answer, gets the certificate already registered, or a new ticket for the same key; a run of the command with the same token reuses the key of the earlier run. If the command stops before it has a certificate, the host is still new (pending), and the host administrator creates a new token for it, which invalidates the earlier token, its retries and its open ticket (ADR-0031).
+- The same path enrols a revoked host again, the yearly re-enrolment included (ADR-0030, ADR-0031).
+- If the registration does not succeed (the API cannot be reached, a deadline), the Enrolment service retries within its configured bounds, never after the expiry of the ticket. A ticket that expires with a certificate signed but not registered is a critical state (ADR-0030, ADR-0032): the API sees the expired ticket itself, and the Enrolment service reports the serial in its state file. That certificate is never mapped, so the Collector refuses it (ADR-0027); the Enrolment service still submits it once the API answers again, so that it is revoked.
 - If the command cannot store its certificate, it fails visibly. The certificate stays mapped; the command can retry, and gets the same certificate.
-- An abandoned pending host is revoked, then retired (ADR-0026, ADR-0031).
+- An abandoned pending host is revoked, which also invalidates its unused tokens, then retired (ADR-0026, ADR-0031).
 - The Agent CA list can be replayed over plain HTTP while it is valid, up to 7 days: it is signed, so it cannot be changed, only replayed (ADR-0021, ADR-0029).
 - **Residual risk** (ADR-0031): the Enrolment service terminates the TLS, so it sees the token. A compromised Enrolment service can consume it with its own key, and enrol one machine per token in place of the real one. The real machine is then refused, which is visible. The source address it passes to the API is its own statement (ADR-0030).
 
@@ -186,7 +187,7 @@ sequenceDiagram
     Enrol->>Enrol: sign with the active Agent CA (same content as the first enrolment)
     Enrol->>Api: register(ticket, certificate)
     Api->>VBE: register: one atomic operation
-    Note over VBE: same checks as the first enrolment, and the predecessor still mapped and active (ADR-0030)
+    Note over VBE: ticket open and unexpired, public key equal to the one bound in the ticket, host neither revoked, suspect nor retired, predecessor still mapped and active, then the exact profile (ADR-0030)
     break certificate refused
         VBE-->>Api: refused: the serial recorded and revoked, in the same operation
         Api-->>Enrol: refused
