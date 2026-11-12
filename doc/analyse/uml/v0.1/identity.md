@@ -110,7 +110,7 @@ sequenceDiagram
     Enrol->>Enrol: sign with the active Agent CA: subject from the HostId, never from the CSR, random serial, 30 days
     Enrol->>Api: register(ticket, certificate)
     Api->>VBE: register: one atomic operation
-    Note over VBE: ticket open and unexpired, public key equal to the one bound in the ticket, host state checked again (not retired, no active mapping, the token of the ticket still the latest of the host; a revoked host is accepted, it is the way back), then the exact profile: listed extensions only, CA=false, client authentication only, no DNS name, unique serial, SHA-256 or stronger, issuer the active Agent CA, validity (ADR-0030)
+    Note over VBE: ticket open and unexpired, public key equal to the one bound in the ticket, host state checked again (not retired, no active mapping, the token of the ticket still the latest of the host, a revoked host being accepted as the way back), then the exact profile: listed extensions only, CA=false, client authentication only, no DNS name, unique serial, SHA-256 or stronger, issuer the active Agent CA, validity (ADR-0030)
     alt certificate accepted
         VBE-->>Api: stored: the mapping (SHA-256 hash, issuer, serial, HostId), the issued certificate, the issuance record, the use of the token with its source address. The host is active, its suspect mark lifted if any
         Api-->>Enrol: registered
