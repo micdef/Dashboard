@@ -150,3 +150,7 @@ On 2026-11-12, Ackbar, Boba Fett, C-3PO and Jocasta Nu read the fixes of section
 ### Deferred
 
 - A fleet that stops calling is "down: silent", a display state, not a critical state of ADR-0032 (Boba Fett). Whether a silent host is a critical state is decided with the heartbeat sequences of 0.1.
+
+## 7. Last check
+
+A last check of the fixes of section 6 by the same four agents found nothing blocking nor any new gap in the design; Ackbar found no important point. The remaining points, all fixed: a new machine, which has no certificate file, must not be stopped by the check of a valid certificate; the certificate is moved before the key, and the pending record kept until both are in place; the entries of the state file are removed on every final answer of the API or once their serial is revoked, and a drop at the bound is a critical state; the warning period of the Enrolment server certificate stated as starting after its renewal, with both values in one configuration file; a refusal for the identity's age releases the reserved successor; wording.
