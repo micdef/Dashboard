@@ -8,7 +8,7 @@ Drawing the sequences found three points that no ADR settled: how the heartbeat 
 
 - **Heartbeat**: a unary call, separate from the command stream. Agreed with the first choice.
 - **Identity resolution**: on every call, not once per connection, with the ASP.NET Core certificate cache forbidden; an unreachable data gateway shown as "unknown". This refined the first choice ("at each new connection"), and the product owner adopted it.
-- **Revocation list**: daily regeneration only, with failure rules. This differed from the first choice (daily plus a short polling interval): on Linux, .NET keeps a revocation list until its `nextUpdate` (read in the .NET source on its main branch, **not verified** on 10.0), so a list regenerated sooner would not reach the agents, and the mapping already refuses at once. The product owner changed his decision.
+- **Revocation list**: the agent recommended a daily regeneration only, with failure rules, against the first choice (daily plus a short polling interval): on Linux, .NET keeps a revocation list until its `nextUpdate` (read in the .NET source on its main branch, **not verified** on 10.0), so a list regenerated sooner would not reach the agents, and the mapping already refuses at once. The product owner first followed it, then, on 2026-11-12, kept the short polling interval after all: the Collector, which reloads the local file, sees a revocation through the list within minutes. The limit for the agents is written in ADR-0029.
 
 Result: ADR-0028 (heartbeat) and ADR-0029 (identity resolution and revocation propagation).
 
