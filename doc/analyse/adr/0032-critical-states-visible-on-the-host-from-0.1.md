@@ -11,7 +11,7 @@
 
 ## Context
 
-The alert channel arrives in 0.2 (ADR-0025). Increment 0.1 already holds states that need a human: a host marked suspect (ADR-0030), a token presented again once used (ADR-0031), an Agent CA revocation list that cannot be regenerated, or that the Collector cannot use (ADR-0029), a certificate signed but not registered, an Enrolment service server certificate that expires or cannot be read (ADR-0030). In 0.1, the only place that shows them is the development status page (ADR-0015), which nobody may be watching.
+The alert channel arrives in 0.2 (ADR-0025). Increment 0.1 already holds states that need a human: a host marked suspect (ADR-0030), a token presented again once used (ADR-0031), an Agent CA revocation list that cannot be regenerated, or that the Collector cannot use (ADR-0029), a certificate signed but not registered, an Enrolment service server certificate that expires or cannot be read (ADR-0030), an agent certificate that is about to expire because its renewals fail (ADR-0017). In 0.1, the only place that shows them is the development status page (ADR-0015), which nobody may be watching.
 
 The team review of the first draft of this ADR found three gaps:
 
@@ -23,18 +23,20 @@ The team review of the first draft of this ADR found three gaps:
 
 ### Critical states and their record
 
-- Each state of the list above is a **critical state**, and so is every critical state that a later ADR adds. The service that detects it logs it at critical level, with a fixed `EventId` from the range of its class (CLAUDE.md, section 7).
+- Each state named in the Context is a **critical state**, and so is every critical state that a later ADR adds. An agent certificate is "about to expire" when it expires within a number of days set in the configuration; the Collector sees it from the days before expiry that each heartbeat reports (ADR-0021). The service that detects a critical state logs it at critical level, with a fixed `EventId` from the range of its class (CLAUDE.md, section 7).
 - The state is recorded through the data gateway, with the time it began and, once it is over, the time it ended:
   - the Collector records its own states through its `ingest` socket (ADR-0029);
   - the API records its own states, and those of the Enrolment service;
-  - repeated occurrences of the same state, for the same host or the same token, increment the counter of **one** open state, as for retired hosts (ADR-0026).
+  - repeated occurrences of the same state, for the same host or the same token, increment the counter of **one** open state, as for retired hosts (ADR-0026);
+  - if the data gateway cannot be reached when a state is detected, the detector keeps the state in memory and records it as soon as the gateway answers again.
 
 ### States of the Enrolment service
 
 - The Enrolment service writes a **state file**: atomically (a temporary file, then a rename), readable by the API's group, carrying the time it was written, refreshed at an interval set in its configuration, as it writes its public certificate file (ADR-0030). Nothing is added to its socket to the API.
-- The API reads it when it changes and at that interval, after bounding its size, and records the states it holds. A state file that is missing, older than its interval allows, too large or invalid is "unknown", which is itself a critical state.
-- The API also works out by itself every state it can see without the Enrolment service: the age, the `nextUpdate` and the CRL number of the Agent CA revocation list, read from the list file; and the issuance tickets that expired without a registration (ADR-0030). The state file adds only what the API cannot see: a list refused because it would hold fewer serials (ADR-0029), and the serial of a certificate signed but not registered.
-- Once the API knows the serial of a certificate signed but not registered, it records it in the issuance register as "signed, not registered" and revokes it, as a refused certificate (ADR-0030).
+- The state file follows a strict schema: known fields only, typed, with bounded lengths and a bounded number of entries. The API reads it when it changes and at that interval, after bounding its size, and records the states it holds. A state file that is missing, older than its interval allows, too large or outside the schema is "unknown", which is itself a critical state. Its values are never shown or logged raw.
+- The API also works out by itself every state it can see without the Enrolment service, reading the list file as it reads the certificate file (read access for its group): the age, the `nextUpdate` and the CRL number of the Agent CA revocation list. It also sees the issuance tickets that **expired** without a registration (ADR-0030); a ticket invalidated or replaced does not count. This state, "ticket expired unregistered", ends when a later ticket of the host is registered or the host is revoked.
+- The state file adds only what the API cannot see: a list refused because it would hold fewer serials (ADR-0029), and the serial of a certificate signed but not registered, which the Enrolment service writes before it calls `register` (ADR-0030).
+- Once the API reads the serial of a certificate signed but not registered, it records it in the issuance register as "signed, not registered" and revokes it, as a refused certificate (ADR-0030). It does so only if no registered certificate holds that serial; otherwise it records a suspect event. This revocation only adds the serial to the revocation list: it never changes a mapping nor the state of a host.
 - **Limit**: a compromised Enrolment service can hide the states that only it knows. The states that the API works out itself cannot be hidden by it.
 
 ### The host command "status"
@@ -45,10 +47,10 @@ The team review of the first draft of this ADR found three gaps:
 
 ### How a critical state ends
 
-- A **condition** state (a revocation list that cannot be regenerated or used, a state file or a certificate file that cannot be read, a certificate that expires) ends when the next evaluation finds the condition cleared.
+- A **condition** state (a revocation list that cannot be regenerated or used, a state file or a certificate file that cannot be read, a certificate about to expire, a ticket expired unregistered) ends when the next evaluation finds the condition cleared.
 - A **suspect host** ends with its explicit revocation (ADR-0030).
 - A **certificate signed but not registered** ends once its serial is revoked and on a published list.
-- An **event** state (a token presented again once used, expired or invalidated, ADR-0031; a refused certificate that reuses an active serial, ADR-0030) ends only through a host command **"resolve"**, with a reason, recorded with the host account (audited from 0.2). It is available on the host channel only, never in the web site. A new occurrence after the resolution opens a new state.
+- An **event** state (a token presented again once used, expired or invalidated, ADR-0031; a refused certificate that reuses an active serial, ADR-0030) ends only through a host command **"resolve"**, with a reason, recorded with the host account, or "host account not read" as for the creation of a token (ADR-0031), and audited from 0.2. It is available on the host channel only, never in the web site. "Resolve" refuses condition states, suspect hosts and certificates signed but not registered, which end only as stated above. A new occurrence after the resolution opens a new state.
 - "Resolve" is not "acknowledge": acknowledging an alert changes its display only, and the alert stays open (ADR-0026). From 0.2, resolving a critical state resolves its alert, which is notified (ADR-0026).
 
 ### From 0.2, and tests
