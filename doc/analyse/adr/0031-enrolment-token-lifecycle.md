@@ -5,7 +5,7 @@
 | Status | Accepted |
 | Date | 2026-11-06 |
 | Decider | Michaël Defraene (product owner, architect) |
-| Drafted by | Claude (main developer), after the team review of the sequence diagrams of 0.1; second reading by the architecture review agent before the decisions |
+| Drafted by | Claude (main developer), after the team review of the sequence diagrams of 0.1; second reading by the architecture review agent before the decisions; the storage of the token amended after the team review of this ADR, by decision of the product owner |
 | Classification | Security-sensitive [SEC] |
 | Complements | ADR-0025, ADR-0026, ADR-0027 |
 
@@ -30,16 +30,16 @@ This ADR adds to the ADRs it complements. It **tightens** the creation and the c
 ### Storage
 
 - A token is a value of at least 128 bits from `RandomNumberGenerator` (ADR-0017). The database stores its SHA-256 hash, the `HostId`, the kind (agent; monitor from 0.2), the expiry and the state; never the value.
-- The API looks the token up by its hash, then compares the stored hash with the computed one using `CryptographicOperations.FixedTimeEquals`, so the comparison is in constant time (ADR-0017). The index lookup that precedes it can only reveal the beginning of the hash of a random value of 128 bits, which gives nothing usable.
+- The API looks the token up by its hash, then compares the stored hash with the computed one using `CryptographicOperations.FixedTimeEquals` (ADR-0017), as a defence in depth. The protection comes from the value itself: the index lookup can at most reveal the beginning of the hash of a random value of 128 bits, from which the value cannot be found (reasoning, not measured).
 - The token **identifier** recorded in the issuance register and the audit trail (ADR-0026) is the row identifier, never the value nor the hash.
 
 ### One live token per `HostId`, checked when it is used
 
-- A **new** `HostId` is one that never had a mapped certificate. Such a host is shown as **pending** from the creation of its first token. A new token can therefore be created for a pending host, as for any new host (ADR-0025, ADR-0026). The risk that ADR-0026 prevents, a rogue machine taking the place of a host whose agent stopped, needs a host that held a certificate, which a new host never did.
-- Creating a token is one atomic operation of the data gateway: check the state of the `HostId`, invalidate every earlier unused token of that `HostId` and its open issuance tickets (ADR-0030), insert the new token, and record its creation.
-- Consuming a token is one atomic operation of the data gateway (ADR-0017), which also checks the state of the host **again**: it is refused unless the host is new or revoked, not retired, has no active mapping and no other open ticket. It returns the `HostId`, the kind and the issuance ticket (ADR-0030).
-- A consumption that comes again with the **same token and the same public key** is a retry: the API answers with the certificate already issued, if any, otherwise with a new ticket bound to the same key, and records no refusal. The same token with a different public key is refused as "used".
-- The host page shows how long a host has been pending; beyond a duration set in the configuration, it is logged. A pending host that is abandoned is revoked (it has no certificate to revoke, but the state change is recorded, and alerted from 0.2 as any revocation, ADR-0025), then retired (ADR-0026).
+- A **new** `HostId` is one that never had a mapped certificate and is not retired. Such a host is shown as **pending** from the creation of its first token. A new token can therefore be created for a pending host, as for any new host (ADR-0025, ADR-0026). The risk that ADR-0026 prevents, a rogue machine taking the place of a host whose agent stopped, needs a host that held a certificate, which a new host never did.
+- Creating a token is one atomic operation of the data gateway: check the state of the `HostId`, invalidate **every** earlier token of that `HostId`, used or not, with its right to a retry, and its open issuance tickets (ADR-0030), insert the new token, and record its creation.
+- Consuming a token is one atomic operation of the data gateway (ADR-0017). It first checks whether the consumption is a retry (below); otherwise it checks the state of the host **again**: it is refused unless the host is new or revoked, not retired, has no active mapping and no open ticket. It returns the `HostId`, the kind and the issuance ticket (ADR-0030).
+- A consumption that comes again with the **same token and the same public key** is a retry, accepted only while the token is unexpired and still the latest token of the host. The API answers with the certificate already issued (registered), if any, otherwise with a new ticket bound to the same key, the earlier ticket of this token being invalidated, and records no refusal. The same token with a different public key, or a retry of a token that is no longer the latest, is refused as "used".
+- The host page shows how long a host has been pending; beyond a duration set in the configuration, a warning is logged. A pending host that is abandoned is revoked (it has no certificate to revoke, but the state change is recorded, and alerted from 0.2 as any revocation, ADR-0025), then retired (ADR-0026). Revoking a host also invalidates its unused tokens.
 
 ### Records
 
@@ -53,7 +53,7 @@ This ADR adds to the ADRs it complements. It **tightens** the creation and the c
 
 - The machine is enrolled by a **one-shot enrolment command, run as root**, shipped in the agent package. It reads the token from standard input first, and a file is the fallback; the token is never passed as a command-line argument nor as an environment variable. The procedure in `doc/adm/` has the host administrator type it at a prompt without echo, not through a shell pipe that would leave it in the history.
 - A token file is opened without following symbolic links, and used only if it is a regular file owned by root with mode `0400` or `0600`, in a directory owned by root that others cannot write. It is read through the open descriptor. .NET reads the mode of an open file (`File.GetUnixFileMode(SafeFileHandle)`, Microsoft Learn, net-10.0). Whether it offers an open that does not follow links, and reads the owner of an open file, is **not verified**; if it does not, the check and the opening are two steps, which leaves a race to be stated in the code.
-- The command generates the key pair and writes the private key durably, readable by the agent's user only, before it sends the request. The token is kept in its memory only.
+- The command generates the key pair and writes the private key durably, readable by the agent's user only, before it sends the request. The token is kept in its memory only. A run with the same token, after a stop, reuses the key that the earlier run wrote, so that it is a retry; a run with a new token generates a new key and replaces any earlier key file.
 - The token file is **deleted once the token has been sent** to the Enrolment service: before that, a failure (TLS, revocation list) does not cost the token; after it, the token may have been consumed. This is how the command applies "it deletes the file after use" (ADR-0021). If the file cannot be deleted, the command stops with an error and a clear message.
 - The command retries with the same token and the same key, within bounds set in the configuration; a retry after a lost answer gets the same answer (see above). If the command stops before it has a certificate, the host is still pending, and the host administrator creates a new token for it.
 - Once the certificate is received, the command hands the key and the certificate to the agent's user, and the agent runs under that user.

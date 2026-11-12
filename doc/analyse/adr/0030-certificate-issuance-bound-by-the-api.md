@@ -36,9 +36,13 @@ This ADR adds to ADR-0027. It **tightens** four rules that ADR-0027 keeps from A
 - The API reads the new public key **itself**:
   - at renewal, from the CSR inside the request that the agent signed with its current key (ADR-0017), once it has verified that signature;
   - at first enrolment, from the CSR passed with the token, which the API loads with the same CSR policy as the Enrolment service. What a compromised Enrolment service can still do at first enrolment is stated in ADR-0031.
-- The Enrolment service registers the certificate with `register(ticket, certificate)`, **never with a CSR**. Registration is one atomic operation of the data gateway, which checks **at that moment**: the ticket is open and unexpired; the public key matches the hash bound in the ticket; the host is neither revoked, suspect nor retired; for a renewal, the predecessor is still mapped and active; for a first enrolment, the host has no active mapping. Then the exact profile below.
+- The Enrolment service registers the certificate with `register(ticket, certificate)`, **never with a CSR**. Registration is one atomic operation of the data gateway, which checks **at that moment**:
+  - the ticket is open and unexpired, and the public key matches the hash bound in the ticket;
+  - for a renewal: the host is neither revoked, suspect nor retired, and the predecessor is still mapped and active;
+  - for a first enrolment: the host is not retired, has no active mapping, and the token of the ticket is still the latest token of the host. A revoked host is accepted, since revocation then a new token is the way back of ADR-0026; once the certificate is registered, the host is active again and its suspect mark, if any, is lifted;
+  - then the exact profile below.
 - This tightens the check of the issued certificate in ADR-0017 ("public key equal to the CSR's"), kept by ADR-0027: the CSR that counts is the one the API read itself.
-- If the registration does not succeed (the API cannot be reached, a deadline, a crash), the Enrolment service retries within bounds set in its configuration. A ticket that expires with a certificate signed but not registered is a critical state (ADR-0032), logged with the serial. That certificate is never mapped, so the Collector refuses it (ADR-0027).
+- If the registration does not succeed (the API cannot be reached, a deadline, a crash), the Enrolment service retries within bounds set in its configuration, and never after the expiry of the ticket, which the API returns with it. A ticket that expires with a certificate signed but not registered is a critical state (ADR-0032), logged with the serial. That certificate is never mapped, so the Collector refuses it (ADR-0027); the Enrolment service still submits it once the API answers again, so that it is refused and revoked (see "Refused certificates").
 
 ### Exact certificate profile
 
@@ -55,7 +59,7 @@ This tightens the checks of ADR-0017 kept by ADR-0027.
 ### One successor, reserved atomically
 
 - When the API accepts a renewal request, it reserves the successor of the predecessor certificate **in the same transaction** as the consumption of the nonce and the creation of the ticket, under a unique constraint on the predecessor. Two concurrent requests can therefore never both succeed. The reservation stays bound to the new public key.
-- A request that comes again with the **same new public key** is a retry. It is a new signed request with a fresh nonce. The API answers with the certificate already issued, if any, which it keeps until that certificate expires; otherwise with a **new** ticket bound to the same key, the earlier one being invalidated.
+- A request that comes again with the **same new public key** is a retry. It is a new signed request with a fresh nonce. The API answers with the certificate already issued, if any, which it keeps until that certificate expires; otherwise with a **new** ticket bound to the same key, the earlier one being invalidated. "Issued" means registered: a certificate signed but not registered is never handed back. The same holds for a retry of a first enrolment (ADR-0031).
 - The agent writes its new key durably (written, flushed, then renamed) before it sends the request, so that it can retry. If it cannot write it, it does not send the request.
 - A request with a **different public key** from the same predecessor is a second renewal: it is refused and the host is marked suspect (ADR-0017). An agent that lost its new key, for instance after a virtual machine snapshot or backup was restored between two renewals, is therefore marked suspect too: nothing tells it apart from a thief.
 - This tightens the one-successor rule of ADR-0017 kept by ADR-0027.
@@ -74,7 +78,7 @@ This tightens the checks of ADR-0017 kept by ADR-0027.
 
 ### CSR intake
 
-- On the enrolment endpoint, in this order: the rate limit per source address (ADR-0017), a bound on the size of the request (`MaxReceiveMessageSize`), a bound in bytes on the CSR, set in the configuration, and only then the loading of the CSR.
+- On the enrolment endpoint (the listener of the enrolment channel that accepts a first enrolment without a client certificate), in this order: the rate limit per source address (ADR-0017), a bound on the size of the request (`MaxReceiveMessageSize`), a bound in bytes on the CSR, set in the configuration, and only then the loading of the CSR.
 - The key allowlist becomes: ECDSA P-256 or P-384, or **RSA 3072 or 4096**. This tightens the CSR policy of ADR-0017 ("RSA of at least 3072 bits"), kept by ADR-0027.
 - The Enrolment service applies this policy, and the API applies it again to every CSR it reads.
 

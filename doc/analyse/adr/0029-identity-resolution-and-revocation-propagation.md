@@ -34,20 +34,23 @@ The identity resolution and the propagation of revocations are recorded together
 
 ### Agent CA revocation list
 
-- The Enrolment service regenerates the list **daily** (ADR-0021). At each regeneration, it reads the revoked serials from the API, through the "revoked serials" service of its socket (ADR-0017). No new link is added.
-- An error of the API is never read as an empty list. If the API cannot be reached, or answers an error, the Enrolment service keeps the previous list while it is valid, and the failure is a critical state (ADR-0032): logged, shown by the host status command in 0.1, alerted from 0.2 (ADR-0025). The 7-day validity gives about 6 days to repair it (ADR-0017).
+- The Enrolment service regenerates the list **daily** (ADR-0021), and also reads the revoked serials from the API at a **short interval** set in its configuration, through the "revoked serials" service of its socket (ADR-0017). When the serials changed since the last list, it regenerates the list at once, without waiting for the daily one. No new link is added.
+- The short interval serves the parties that load the local file and reload it when it changes: the Collector (below) and the Enrolment service itself. The agents keep the list they hold until its `nextUpdate` (see "Delay"), so they do not gain from it.
+- An error of the API is never read as an empty list. If the API cannot be reached, or answers an error, the Enrolment service keeps the previous list while it is valid. A failed short read is logged as a warning; the failure is a critical state (ADR-0032) when the daily regeneration fails, or when no read has succeeded for a duration set in the configuration: logged, shown by the host status command in 0.1, alerted from 0.2 (ADR-0025). The 7-day validity gives about 6 days to repair it (ADR-0017).
 - The Enrolment service never publishes a list with fewer serials than the previous one, except the serials of certificates that have expired; it refuses to publish such a list, logs it as a critical state and keeps the previous one. The CRL number of each new list is higher than the previous one.
 - The list file is written atomically: a temporary file, then a rename.
-- **Delay**: a revoked machine is refused at once by the mapping. A party that checks the list itself may accept the revoked certificate until it loads a newer list: up to about 7 days for one that keeps the previous list until its `nextUpdate`.
+- **Delay**: a revoked machine is refused at once by the mapping. Through the list, the Collector and the Enrolment service see a revocation within the short interval. A party that keeps the previous list until its `nextUpdate`, as the agents on Linux do, may accept the revoked certificate for up to about 7 days.
 - **The Collector** loads the list from the local file (ADR-0025). It checks the signature against the Agent CA anchor set, the `nextUpdate`, and that the CRL number is not lower than the highest one it has loaded, which it keeps across restarts. It loads the file again when the file changes:
-  - a new file that fails these checks is refused and logged, and the Collector keeps the last valid list until its `nextUpdate`;
-  - with no valid list at all (missing, expired or invalid), it refuses every agent certificate (strict revocation, ADR-0017). This is a fault of the Collector, not of the hosts: it is a critical state (ADR-0032), and the dashboard shows the fleet as "unknown", not as "down: refused".
+  - a new file that fails these checks is refused and logged; the Collector keeps the last valid list until its `nextUpdate`, and the refusal is a critical state at once (ADR-0032), with the time left on the list it keeps;
+  - with no valid list at all (missing, expired or invalid), it refuses every agent certificate (strict revocation, ADR-0017). This is a fault of the Collector, not of the hosts: it is a critical state (ADR-0032), and the dashboard shows the fleet as "unknown", not as "down: refused";
+  - if the highest CRL number it keeps cannot be read at start-up, it loads no list, which is the case above. The recovery is a written procedure in `doc/adm/`. There is no override for a list with a lower number in V1.
+- The Collector records its critical states through its `ingest` socket, with a procedure of its own; the mapping stays read-only for it.
 
 ## Alternatives considered
 
 - **Resolution once per connection.** Rejected: an HTTP/2 connection stays open, and how to close a Kestrel connection from outside a request is not documented.
 - **A cache of the mapping with a lifetime set in the configuration.** Rejected: a revocation would wait for the cache to expire, which weakens the immediate refusal of ADR-0017; that would need an ADR that supersedes it.
-- **The Enrolment service also reading the revoked serials at a short interval, and regenerating the list when they change.** Not adopted: on Linux, .NET keeps a revocation list until its `nextUpdate` and does not download it again before (read in the .NET source on its main branch; the 10.0 branch and Windows are **not verified**), so the agents would not see a newer list; the immediate refusal already comes from the mapping. The product owner first chose this option, and changed his decision after the second reading.
+- **A daily regeneration only.** Not adopted. The architecture review recommended it: on Linux, .NET keeps a revocation list until its `nextUpdate` and does not download it again before (read in the .NET source on its main branch; the 10.0 branch and Windows are **not verified**), so the agents would not see a newer list, and the immediate refusal already comes from the mapping. The product owner kept the short interval, so that the parties that load the local file, the Collector first, also see a revocation through the list within minutes, as a second line behind the mapping.
 - **A notification link from the API to the Enrolment service.** Rejected: one more link, and it reverses the dependency of ADR-0016.
 - **A shorter list validity** (for instance one day). Not adopted: the tolerance to an outage of the Enrolment service would drop from about 6 days to less than one, for a gain that the mapping already gives.
 
@@ -58,10 +61,12 @@ The identity resolution and the propagation of revocations are recorded together
 - A revoked or suspect machine is refused at its next call, with no state kept in memory.
 - An outage of the data gateway, or an unusable revocation list, never looks like a refused identity.
 - The revocation list keeps the tolerance of ADR-0017 to an outage of the Enrolment service, with stated failure rules.
+- On the "app" VM, the list is a second line behind the mapping within the short interval, not a day later.
 
 ### Negative
 
-- One read through the data gateway on every call of every agent.
+- One read through the data gateway on every call of every agent, and one read of the revoked serials at each short interval.
+- More lists are published, each with a higher CRL number; the agents gain nothing from them before the `nextUpdate` of the list they hold.
 - A party that checks only the revocation list sees a revocation up to about 7 days late; the code must never rely on the list alone where the mapping can be read.
 - How the Collector, and the Enrolment service at renewal, check an agent certificate against the loaded list (their own check of the serial, or the .NET chain building from a local file) is **not verified**: a test decides it when the 0.1 work starts, with a revoked certificate that must fail and an expired list that must fail.
 
