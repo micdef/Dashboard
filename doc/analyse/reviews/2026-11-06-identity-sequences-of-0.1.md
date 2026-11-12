@@ -138,3 +138,15 @@ Every earlier finding was confirmed closed. The new findings, all fixed:
 - Minor findings, fixed: the bounds of the short interval checked at start-up, a state kept in memory while the data gateway is down, "resolve" refused for condition states and suspect hosts, an honest late retry not counted as a suspect event, the command retrying after transport failures only, wording and citations on the page, the open points listed on the page.
 
 These fixes are read again by the agents that found them before the pull requests are handed to the product owner; the results are in the pull requests.
+
+## 6. Reading of the fixes of section 5
+
+On 2026-11-12, Ackbar, Boba Fett, C-3PO and Jocasta Nu read the fixes of section 5. All their findings of section 5 are closed; none is blocking. The counts are taken from their reports: Ackbar 0 / 2 / 1, Boba Fett 0 / 3 / 5, C-3PO 0 / 2 / 4, Jocasta Nu 0 / 2 / 5. The four agents found the same two gaps, both brought by the fixes:
+
+- **S6-1**: the serial written before `register` could be revoked while the registration was still in progress, and every normal registration left an entry that looked like a suspect event. The entry carries its ticket, the API acts only once that ticket has expired or been invalidated without a registration, the Enrolment service removes the entry once the certificate is registered, and `register` refuses a revoked serial (ADR-0030, ADR-0032).
+- **S6-2**: "a valid certificate", for which the enrolment command refuses to run, was not defined, and blocked enrolling a revoked host again. Defined as unexpired, chaining to the anchor set, and not on the list that the command fetches first; the check is made once the list is held (ADR-0031).
+- Other findings, fixed: an agent certificate about to expire computed by the Collector from the presented certificate, and ended only by a new certificate or a revocation (Boba Fett); the order of the renewal checks, a second renewal detected before the identity age (Jocasta Nu); warning periods checked at start-up; states kept in memory bounded, the log as the record of last resort; repeated failures logged when they begin and end; the move of the key and the certificate; the retention of the key hash used to recognise a late retry; wording.
+
+### Deferred
+
+- A fleet that stops calling is "down: silent", a display state, not a critical state of ADR-0032 (Boba Fett). Whether a silent host is a critical state is decided with the heartbeat sequences of 0.1.
