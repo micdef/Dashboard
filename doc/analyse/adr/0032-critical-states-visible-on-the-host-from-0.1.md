@@ -41,7 +41,7 @@ The team review of the first draft of this ADR found three gaps:
 
 - A host command **"status"**, on the host channel of the API (ADR-0023), lists the active critical states and **exits with an error** when at least one is active. It also fails when a state cannot be read (the data gateway cannot be reached, the state is "unknown"), and when the API itself cannot be reached.
 - It is read-only. Its output is limited to the state, the time it began, its counter and the `HostId` concerned: no hash, no serial of an active certificate, no token identifier, no source address. Its output may end in the system journal, which accounts other than root can read.
-- The host administrator runs it by hand, or from a systemd timer that runs it **as root**; scheduling it is the administrator's choice, not Dashboard's (CLAUDE.md, section 9). The group of the host channel is **never** given to a monitoring account, because it holds every host right (ADR-0023). A separate read-only channel for a monitor that is not root is recorded in the [future improvements](../future-improvements.md).
+- The host administrator runs it by hand, or from a systemd timer that runs it **as root**; scheduling it is the administrator's choice, not Dashboard's (CLAUDE.md, section 9). The installation procedure in `doc/adm/` sets that timer up by default, so that a critical state is not left unseen in 0.1. The group of the host channel is **never** given to a monitoring account, because it holds every host right (ADR-0023). A separate read-only channel for a monitor that is not root is recorded in the [future improvements](../future-improvements.md).
 
 ### How a critical state ends
 

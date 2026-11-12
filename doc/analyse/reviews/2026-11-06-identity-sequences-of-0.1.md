@@ -14,6 +14,8 @@ Result: ADR-0028 (heartbeat) and ADR-0029 (identity resolution and revocation pr
 
 ## 2. Team review of the first draft of the identity sequences
 
+The counts below are taken from the agents' reports.
+
 | Agent | Blocking | Important | Minor |
 |---|---|---|---|
 | Ackbar | 3 | 8 | 7 |
@@ -26,11 +28,11 @@ Result: ADR-0028 (heartbeat) and ADR-0029 (identity resolution and revocation pr
 
 | Id | Finding | Outcome |
 |---|---|---|
-| A-B1 | At renewal, the API checked the issued certificate against a CSR supplied by the Enrolment service itself: a compromised Enrolment service could register its own key for every machine. | Issuance ticket bound to the key that the API reads itself (ADR-0030). |
-| A-B2 | Two concurrent renewals from one stolen key could both succeed. | Atomic reservation of the successor under a unique constraint (ADR-0030). |
-| A-B3 | Several live tokens per host, and a consumption that did not check the host again. | One live token per host, atomic creation and consumption that check the host state again (ADR-0031). |
-| B-B1 | An honest retry after a lost renewal answer was taken for a second renewal. | Idempotent retry with the same key (ADR-0030). |
-| B-B2 | A host whose token was consumed without a certificate could get no new token. | "New `HostId`" defined as never mapped, shown as pending (ADR-0031). |
+| S2-A-B1 | At renewal, the API checked the issued certificate against a CSR supplied by the Enrolment service itself: a compromised Enrolment service could register its own key for every machine. | Issuance ticket bound to the key that the API reads itself (ADR-0030). |
+| S2-A-B2 | Two concurrent renewals from one stolen key could both succeed. | Atomic reservation of the successor under a unique constraint (ADR-0030). |
+| S2-A-B3 | Several live tokens per host, and a consumption that did not check the host again. | One live token per host, atomic creation and consumption that check the host state again (ADR-0031). |
+| S2-B-B1 | An honest retry after a lost renewal answer was taken for a second renewal. | Idempotent retry with the same key (ADR-0030). |
+| S2-B-B2 | A host whose token was consumed without a certificate could get no new token. | "New `HostId`" defined as never mapped, shown as pending (ADR-0031). |
 
 ### Important findings, in short
 
@@ -48,6 +50,8 @@ The architecture review agent read the eight resulting points without the main d
 
 ## 3. Team review of ADR-0028 to ADR-0031
 
+The counts below are taken from the agents' reports.
+
 | Agent | Blocking | Important | Minor |
 |---|---|---|---|
 | C-3PO | 1 | 5 | 7 |
@@ -62,9 +66,9 @@ Ackbar confirmed that his three blocking findings of section 2 are closed, and s
 
 | Id | Finding | Outcome |
 |---|---|---|
-| C-B1 | The ADRs cited the sequence diagrams, which are not in their pull request. | The ADRs cite this report; the diagrams follow in the next pull request of the chain. |
-| B-B1 | An expired ticket blocked a renewal, and a lost key turned an honest host suspect without saying so. | A retry with the same key gets a new ticket and a fresh nonce; a lost key stays a second renewal, and the restore of a snapshot is stated as a cause (ADR-0030). |
-| B-B2 | "Every certificate signed is registered or revoked" was false. | Bounded retries of the registration, a critical state for a ticket that expires with a signed certificate, refusal and revocation in one operation; the claim restricted to the certificates submitted to the API (ADR-0030). |
+| S3-C-B1 | The ADRs cited the sequence diagrams, which are not in their pull request. | The ADRs cite this report; the diagrams follow in the next pull request of the chain. |
+| S3-B-B1 | An expired ticket blocked a renewal, and a lost key turned an honest host suspect without saying so. | A retry with the same key gets a new ticket and a fresh nonce; a lost key stays a second renewal, and the restore of a snapshot is stated as a cause (ADR-0030). |
+| S3-B-B2 | "Every certificate signed is registered or revoked" was false. | Bounded retries of the registration, a critical state for a ticket that expires with a signed certificate, refusal and revocation in one operation; the claim restricted to the certificates submitted to the API (ADR-0030). |
 
 ### Decisions of the product owner
 
@@ -88,4 +92,29 @@ Ackbar confirmed that his three blocking findings of section 2 are closed, and s
 
 ## 4. Second reading of the fixes
 
-The fixes of section 3 are read again by the agents that found them, before the pull request is handed to the product owner. The results are in the pull request.
+The agents that found the findings of section 3 read the fixes again. The counts are taken from their reports.
+
+| Agent | Blocking | Important | Minor | Earlier findings |
+|---|---|---|---|---|
+| Cassian | 0 | 0 | 1 | all closed |
+| Ackbar | 0 | 2 | 4 | all closed |
+| Boba Fett | 0 | 5 | 7 | all closed or accepted |
+| C-3PO | 0 | 2 | 4 | all closed, one term left |
+| Jocasta Nu | 0 | 2 | 6 | all closed |
+
+The new findings came from the fixes themselves:
+
+- **S4-1** (Boba Fett, C-3PO, Jocasta Nu): the Enrolment service detects critical states, but has no access to the data gateway and its socket is limited (ADR-0017). Decided by the product owner after a second reading by the architecture review agent: the Enrolment service writes a state file that the API reads, and the API works out by itself every state it can see; a missing or stale file is "unknown" (ADR-0032).
+- **S4-2** (Ackbar): the host command "status" on the host channel, whose group holds every host right. Decided the same way: the timer runs as root, the group is never given to a monitoring account, the output is limited, and a read-only channel is recorded in the future improvements (ADR-0032, classified [SEC]).
+- **S4-3** (Boba Fett, Ackbar): event states with no end. Decided the same way: condition states end when the condition clears, a suspect host with its revocation, event states only through a host command "resolve", with a reason (ADR-0032). "Resolve" is not "acknowledge" (ADR-0026).
+- **S4-4** (Jocasta Nu): the registration refused a revoked host, which broke enrolling a host again, the yearly one included. A first enrolment now accepts a revoked host; the suspect mark is lifted once the new certificate is registered (ADR-0030).
+- **S4-5** (Ackbar): a superseded token, already consumed, could still enrol a host through its retry. A new token invalidates every earlier token with its right to a retry, and a retry is accepted only for the latest token (ADR-0031).
+- **S4-6** (Boba Fett, Jocasta Nu): a retry was refused by the checks of the host state. The retry is checked first (ADR-0031); a rerun of the enrolment command with the same token reuses its key (ADR-0031).
+- **S4-7** (Boba Fett): a new revocation list refused by the Collector was only logged. It is a critical state at once (ADR-0029).
+- Minor findings, fixed: the end of the retries of the registration bound by the ticket's expiry, "issued" meaning registered, a certificate signed but not registered submitted later to be revoked, the Collector's highest CRL number unreadable at start-up, the "unknown" fleet state, a warning for a host pending too long, the reasoning on the index lookup marked as such, the history of the token storage in the header of ADR-0031, the file name of ADR-0032, the term "enrolment endpoint", the finding identifiers of this report.
+
+On 2026-11-12, the product owner kept the short polling interval of the revoked serials in ADR-0029 (section 1).
+
+## 5. Third reading
+
+The fixes of section 4, and the identity sequences aligned with ADR-0028 to ADR-0032, are read by the agents of the earlier readings before the pull requests are handed to the product owner. The results are in the pull requests.
