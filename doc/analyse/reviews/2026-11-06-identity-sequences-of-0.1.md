@@ -117,4 +117,24 @@ On 2026-11-12, the product owner kept the short polling interval of the revoked 
 
 ## 5. Third reading
 
-The fixes of section 4, and the identity sequences aligned with ADR-0028 to ADR-0032, are read by the agents of the earlier readings before the pull requests are handed to the product owner. The results are in the pull requests.
+On 2026-11-12, the agents of the earlier readings read the fixes of section 4 and the identity sequences aligned with ADR-0028 to ADR-0032. The counts are taken from their reports.
+
+| Agent | Blocking | Important | Minor |
+|---|---|---|---|
+| Cassian | 0 | 0 | 2 |
+| C-3PO | 0 | 3 | 8 |
+| Ackbar | 0 | 3 | 6 |
+| Boba Fett | 0 | 4 | 3 (ADRs), plus 3 on the page |
+| Jocasta Nu | 0 | 3 | 9 |
+
+Every earlier finding was confirmed closed. The new findings, all fixed:
+
+- **S5-1** (C-3PO, Ackbar, Boba Fett, Jocasta Nu): in two diagrams, a refusal or a retry fell through to the signature. The refusals are `break` blocks, and a retry that gets the registered certificate ends there (identity sequences).
+- **S5-2** (Jocasta Nu, C-3PO): ADR-0029 stated as a fact that the Collector sees a revocation within the short interval; this holds only if it checks the serial itself, which the test at the start of 0.1 decides. Made conditional; if only the .NET chain building is possible, the product owner decides again. The amendment of 2026-11-12 is in the header.
+- **S5-3** (Ackbar): the API revoked a serial read from the state file of the Enrolment service without checking it. Revoked only if no registered certificate holds it, otherwise a suspect event; the revocation never touches a mapping; the state file follows a strict schema (ADR-0032).
+- **S5-4** (Ackbar): a run of the enrolment command with a new token replaced the agent's key before the enrolment succeeded. The new key waits on a pending path, bound to the hash of its token, and the command refuses to run while the agent holds a valid certificate (ADR-0031).
+- **S5-5** (Boba Fett): "certificate signed but not registered" counted every abandoned ticket and could not end without a serial. Split into "ticket expired unregistered", worked out by the API, and the serial written by the Enrolment service before it registers (ADR-0030, ADR-0032).
+- **S5-6** (Boba Fett): a failed regeneration triggered by a change, an agent certificate about to expire, and the Enrolment server certificate before its expiry were not critical states. They are (ADR-0029, ADR-0030, ADR-0032).
+- Minor findings, fixed: the bounds of the short interval checked at start-up, a state kept in memory while the data gateway is down, "resolve" refused for condition states and suspect hosts, an honest late retry not counted as a suspect event, the command retrying after transport failures only, wording and citations on the page, the open points listed on the page.
+
+These fixes are read again by the agents that found them before the pull requests are handed to the product owner; the results are in the pull requests.

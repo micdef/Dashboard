@@ -42,7 +42,8 @@ This ADR adds to ADR-0027. It **tightens** four rules that ADR-0027 keeps from A
   - for a first enrolment: the host is not retired, has no active mapping, and the token of the ticket is still the latest token of the host. A revoked host is accepted, since revocation then a new token is the way back of ADR-0026; once the certificate is registered, the host is active again and its suspect mark, if any, is lifted;
   - then the exact profile below.
 - This tightens the check of the issued certificate in ADR-0017 ("public key equal to the CSR's"), kept by ADR-0027: the CSR that counts is the one the API read itself.
-- If the registration does not succeed (the API cannot be reached, a deadline, a crash), the Enrolment service retries within bounds set in its configuration, and never after the expiry of the ticket, which the API returns with it. A ticket that expires with a certificate signed but not registered is a critical state (ADR-0032), logged with the serial. That certificate is never mapped, so the Collector refuses it (ADR-0027); the Enrolment service still submits it once the API answers again, so that it is refused and revoked (see "Refused certificates").
+- Before it calls `register`, the Enrolment service writes the serial of the signed certificate durably to its state file (ADR-0032), so that a crash does not lose it.
+- If the registration does not succeed (the API cannot be reached, a deadline, a crash), the Enrolment service retries within bounds set in its configuration, and never after the expiry of the ticket, which the API returns with it. That certificate is never mapped, so the Collector refuses it (ADR-0027). Its serial reaches the API through the state file, and the API revokes it (ADR-0032); the certificate is never registered after the expiry of its ticket.
 
 ### Exact certificate profile
 
@@ -87,7 +88,7 @@ This tightens the checks of ADR-0017 kept by ADR-0027.
 - The Enrolment service keeps renewing its own server certificate (ADR-0017), at a moment within its 90 days set in its configuration. Nothing is added to its socket to the API.
 - The service writes the public certificate atomically (a temporary file, then a rename) to a file that the API's group can read; its key is in a directory that this group cannot read. Both services run on the "app" VM (ADR-0016).
 - The API reads that file when it changes and at least once a day, after bounding its size. It checks its profile (server authentication, the DNS name of the Enrolment service, issued by the active Agent CA), records its serial, hash and expiry in the issuance register, and tracks its expiry.
-- A file that is missing, unreadable, too large, invalid or with a wrong profile is logged as an error each time and leaves the state "unknown"; its expiry, or failed reads beyond a number set in the configuration, is a critical state (ADR-0032).
+- A file that is missing, unreadable, too large, invalid or with a wrong profile is logged as an error each time and leaves the state "unknown". A certificate that expires within a warning period set in the configuration, or failed reads beyond a number set there, is a critical state (ADR-0032), before the expiry stops every enrolment and renewal.
 - **Limit**: this records what the file holds, not what the service serves. A compromised Enrolment service holds the Agent CA key and can serve a certificate it never wrote to the file.
 
 ### What a compromised Enrolment service can still do
