@@ -87,7 +87,7 @@ sequenceDiagram
     break server certificate invalid or revoked, or list missing, invalid or expired
         Cmd->>Cmd: stop, the token is not sent. Retry within the configured bounds, then fail visibly
     end
-    break the agent holds a valid certificate (unexpired, chaining to the anchor set, serial not on this list), or its certificate file cannot be read
+    break the agent holds a valid certificate (unexpired, chaining to the anchor set, serial not on this list), or its certificate file is present but unreadable or invalid (an absent file means no certificate)
         Cmd-->>HostAdmin: refused: revoke the host first, or wait until its serial is on the list (ADR-0026, ADR-0029, ADR-0031)
     end
     Cmd->>Enrol: enrol(CSR, token)
@@ -117,6 +117,7 @@ sequenceDiagram
         break certificate refused
             VBE-->>Api: refused: the serial recorded as refused at registration and revoked, in the same operation (ADR-0030)
             Api-->>Enrol: refused
+            Enrol->>Enrol: remove the entry from its state file
             Enrol-->>Cmd: refused (generic): the command stops, without a retry
         end
         VBE-->>Api: stored: the mapping (SHA-256 hash, issuer, serial, HostId), the issued certificate, the issuance record, the use of the token with its source address. The host is active, its suspect mark lifted if any
@@ -126,15 +127,16 @@ sequenceDiagram
     else retry, certificate already registered
         VBE-->>Api: the certificate already registered
         Api-->>Enrol: certificate
+        Enrol->>Enrol: remove the entry of this ticket from its state file, if any
         Enrol-->>Cmd: certificate
     end
-    Cmd->>Cmd: move the pending key, then the certificate, to the agent's user, each by a rename (ADR-0031)
+    Cmd->>Cmd: move the certificate, then the pending key, to the agent's user, each by a rename, and remove the pending record once both are in place (ADR-0031)
 ```
 
 - The token is consumed before the certificate is signed, so it can never enrol two machines (ADR-0017, ADR-0031). The command retries after a transport failure only; a refusal stops it.
 - A retry with the same token and the same key, after a lost answer, gets the certificate already registered, or a new ticket for the same key, while the token is unexpired and still the latest. A run of the command with the same token reuses the pending key of the earlier run. After the token has expired, the host administrator creates a new token, which invalidates the earlier token, its retries and its open ticket; the command says so (ADR-0031).
 - The same path enrols a revoked host again, the yearly re-enrolment included (ADR-0030, ADR-0031).
-- If the registration does not succeed (the API cannot be reached, a deadline), the Enrolment service retries within its configured bounds, never after the expiry of the ticket. The certificate is then never mapped, so the Collector refuses it (ADR-0027). Once the ticket has expired without a registration, and only then, the API revokes the serial that the state file pairs with it, and a later `register` of that serial is refused (ADR-0030, ADR-0032).
+- If the registration does not succeed (the API cannot be reached, a deadline), the Enrolment service retries within its configured bounds, never after the expiry of the ticket. The certificate is then never mapped, so the Collector refuses it (ADR-0027). Once the ticket has expired, or been invalidated, without a registration, and only then, the API revokes the serial that the state file pairs with it, and a later `register` of that serial is refused (ADR-0030, ADR-0032).
 - If the token file cannot be deleted, the command stops with an error; a rerun with the same token is a retry while the token is unexpired.
 - If the command cannot store the key and the certificate, it fails visibly. The certificate stays mapped, and a rerun with the same token gets the same certificate while the token is unexpired.
 - An abandoned pending host is revoked, which also invalidates its unused tokens, then retired (ADR-0026, ADR-0031).
@@ -189,7 +191,7 @@ sequenceDiagram
         Enrol-->>Agent: refused
     end
     break identity older than 1 year
-        VBE-->>Api: refused: revoke the host and create a new token (ADR-0031)
+        VBE-->>Api: refused, the reserved successor released, the nonce consumed: revoke the host and create a new token (ADR-0030, ADR-0031)
         Api-->>Enrol: refused
         Enrol-->>Agent: refused
     end
@@ -204,6 +206,7 @@ sequenceDiagram
         break certificate refused
             VBE-->>Api: refused: the serial recorded and revoked, in the same operation
             Api-->>Enrol: refused
+            Enrol->>Enrol: remove the entry from its state file
             Enrol-->>Agent: refused
         end
         VBE-->>Api: stored: the successor mapping, the issued certificate, the issuance record, the source address
@@ -216,6 +219,7 @@ sequenceDiagram
     else retry with the same new key, certificate already registered
         VBE-->>Api: the certificate already registered
         Api-->>Enrol: certificate
+        Enrol->>Enrol: remove the entry of this ticket from its state file, if any
         Enrol-->>Agent: certificate
     end
     Agent->>Agent: switch to the new key and certificate
